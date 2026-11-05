@@ -1,0 +1,41 @@
+% doxygen_sfe.sty - corrections to the LaTeX output of Doxygen (1.15, 1.16) for the SCAMPER SFE manuals.
+% Every Doxyfile loads it with LATEX_EXTRA_STYLESHEET, so the PDF manuals build with latexmk without LaTeX warnings.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{doxygen_sfe}[2026/11/05 SCAMPER SFE corrections for the Doxygen LaTeX output]
+
+% 1. Measuring tables. Doxygen typesets every table (markdown tables, parameter lists) once inside \sbox0, i.e. in
+%    restricted horizontal mode, only to measure its natural width, and then chooses fixed or flexible columns. tabularray
+%    compares that hidden table with \linewidth and warns "Table width is too small" for every table that is afterwards
+%    typeset with flexible columns. The measuring table is given an unlimited width; the tables that are shown keep
+%    \linewidth (a table nested in a cell is typeset in paragraph mode, so it is not affected).
+\AddToHook{env/tblr/begin}{\ifhmode\ifinner\linewidth=\maxdimen\fi\fi}
+
+% 2. Section labels. Before the "Member Function Documentation", "Constructor & Destructor Documentation", ... headings of
+%    every class and file, Doxygen writes a \label{doc-...} that is the same in every page (and "LaTeX Warning: Label
+%    multiply defined"), next to a unique \Hypertarget. Nothing refers to these labels, so they are dropped.
+\ExplSyntaxOn
+\cs_new_protected:Npn \__sfe_filtered_label:n #1
+  {
+    \str_if_eq:eeTF { \str_range:nnn {#1} {1} {4} } { doc- }
+      { }
+      { \__sfe_original_label:n {#1} }
+  }
+\AtBeginDocument
+  {
+    \NewCommandCopy \__sfe_original_label:n \label
+    \RenewDocumentCommand \label { m } { \__sfe_filtered_label:n {#1} }
+  }
+\ExplSyntaxOff
+
+% 3. Running headers. The page headers show the current chapter and section titles. File sections are titled with the
+%    full path of the file ("applications/.../main.cpp File Reference"), which can be wider than the page and makes the
+%    header taller than \headheight (fancyhdr warning). The marks are truncated to one line (with an ellipsis).
+\RequirePackage[fit]{truncate}
+\AtBeginDocument{%
+    \NewCommandCopy\sfeOriginalRightMark\rightmark
+    \NewCommandCopy\sfeOriginalLeftMark\leftmark
+    \renewcommand*\rightmark{\truncate{0.85\headwidth}{\sfeOriginalRightMark}}%
+    \renewcommand*\leftmark{\truncate{0.85\headwidth}{\sfeOriginalLeftMark}}%
+}
+
+\endinput

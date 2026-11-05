@@ -1,0 +1,19 @@
+# Doxygen configuration: GMMLite manual
+#
+# Run from this folder:   doxygen Doxyfile
+# Output:                 doc/html (HTML) and doc/latex (LaTeX; PDF with "latexmk -pdf refman.tex" in doc/latex)
+# doc/build_docs.sh (repository root) builds every manual in dependency order and checks that there are no warnings.
+
+@INCLUDE               = ../../doc/Doxyfile.common
+
+PROJECT_NAME           = "GMMLite"
+PROJECT_NUMBER         = 1.0.0
+PROJECT_BRIEF          = "Minimal Gaussian Mixture Models for the Strengthened Fuzzy Extractor libraries"
+OUTPUT_DIRECTORY       = doc
+INPUT                  = doxygen/gmmlite.md \
+                         GMMLite_global.h gmm.h gmm.cpp tests
+USE_MDFILE_AS_MAINPAGE = doxygen/gmmlite.md
+INCLUDE_PATH           = . ..
+CITE_BIB_FILES         = ../../doc/bibliography.bib
+LATEX_EXTRA_STYLESHEET = ../../doc/doxygen_sfe.sty
+GENERATE_TAGFILE       = doc/GMMLite.tag

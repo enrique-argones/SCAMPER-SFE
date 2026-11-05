@@ -1,0 +1,98 @@
+# Doxygen settings shared by every manual of SCAMPER SFE.
+#
+# Each Doxyfile (doc/Doxyfile for the complete manual, and one per module) includes this file with
+#   @INCLUDE = <relative path>/doc/Doxyfile.common
+# and then sets its project-specific tags (PROJECT_NAME, INPUT, OUTPUT_DIRECTORY, CITE_BIB_FILES, TAGFILES, ...).
+# Doxygen is always run from the folder that contains the Doxyfile, so every path is relative to that folder.
+# Only non-default settings are listed. Tested with Doxygen 1.15.0.
+
+DOXYFILE_ENCODING      = UTF-8
+OUTPUT_LANGUAGE        = English
+CREATE_SUBDIRS         = NO
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = .
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_SUPPORT       = YES
+TOC_INCLUDE_HEADINGS   = 3
+AUTOLINK_SUPPORT       = YES
+BUILTIN_STL_SUPPORT    = YES
+DISTRIBUTE_GROUP_DOC   = YES
+RECURSIVE              = NO
+# Directory documentation is not taken from README.md files.
+IMPLICIT_DIR_DOCS      = NO
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+HIDE_UNDOC_MEMBERS     = NO
+SORT_MEMBER_DOCS       = NO
+GENERATE_TODOLIST      = YES
+GENERATE_BUGLIST       = YES
+GENERATE_DEPRECATEDLIST= YES
+
+# Warnings: every manual must be generated with an empty doxygen_warnings.log (doc/build_docs.sh checks it).
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_NO_PARAMDOC       = NO
+WARN_LOGFILE           = doxygen_warnings.log
+
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h *.hh *.hpp *.cpp *.cc *.md
+EXCLUDE_PATTERNS       = */doc/html/* */doc/latex/* */build/* */configFiles/* "*\#*" */.git/*
+EXCLUDE_SYMLINKS       = YES
+
+SOURCE_BROWSER         = YES
+STRIP_CODE_COMMENTS    = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+SEARCH_INCLUDES        = YES
+PREDEFINED             = TURBOCODES_EXPORT= \
+                         THREADPOOL_EXPORT= \
+                         HSTCFE_EXPORT= \
+                         MHSTCE_EXPORT= \
+                         GMMLITE_EXPORT=
+
+# Citations (\cite): the LaTeX/PDF manual uses the IEEE Transactions style (IEEEtran.bst, from the IEEEtran package).
+LATEX_BIB_STYLE        = IEEEtran
+
+# HTML
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+USE_MATHJAX            = NO
+HTML_FORMULA_FORMAT    = png
+FORMULA_FONTSIZE       = 13
+
+# LaTeX / PDF: build with "latexmk -pdf refman.tex" in the latex output folder (doc/build_docs.sh --pdf does it).
+GENERATE_LATEX         = YES
+LATEX_OUTPUT           = latex
+USE_PDFLATEX           = YES
+PDF_HYPERLINKS         = YES
+PAPER_TYPE             = a4
+COMPACT_LATEX          = NO
+LATEX_BATCHMODE        = YES
+EXTRA_PACKAGES         = amsmath amssymb
+
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+
+# Diagrams (Graphviz)
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+DOT_GRAPH_MAX_NODES    = 60

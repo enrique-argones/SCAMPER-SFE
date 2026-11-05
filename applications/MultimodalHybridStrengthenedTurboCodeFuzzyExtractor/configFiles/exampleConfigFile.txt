@@ -1,0 +1,18 @@
+codeOffsetStdDevFactor 1.1
+codeOffsetStdDevOffset 0.2
+fuzzyCommitmentMinReliability 3.0
+modalitiesCount 2
+enrollmentSamplesFilesFolders
+  faceData_64/validationSet/enrollment/
+  keyStrokeData_64/validationSet/enrollment/
+probeSamplesFilesFolders
+  faceData_64/validationSet/probe/
+  keyStrokeData_64/validationSet/probe/
+hybridStrengthenedTurboCodeFuzzyExtractorFilesFolders
+  faceData_64/validationSet/HSTCFEs/cof-1.2-coo-0.2-fcmr-1.8/
+  keyStrokeData_64/validationSet/HSTCFEs/cof-1.1-coo-0.2-fcmr-1.4
+hybridStrengthenedTurboCodeFuzzyExtractorGeneralConfigFiles
+  faceData_64/validationSet/HSTCFEs/cof-1.2-coo-0.2-fcmr-1.8/generalConfigFile_cof-1.2-coo-0.2-fcmr-1.8.generalHSTCFE
+  keyStrokeData_64/validationSet/HSTCFEs/cof-1.1-coo-0.2-fcmr-1.4/generalConfigFile_cof-1.1-coo-0.2-fcmr-1.4.generalHSTCFE
+multimodalHybridStrengthenedTurboCodeFuzzyExtractorFilesFolder /volume1/scratch/eargones/HSFE_Data/multimodalV2/validationSet/MHSTCFEs/face_keystroke_COF-1.1_COO-0.2_FCMR-3.0
+recoveredMessagesFilesFolder /volume1/scratch/eargones/HSFE_Data/multimodalV2/validationSet/recovered/face_keystroke_COF-1.1_COO-0.2_FCMR-3.0

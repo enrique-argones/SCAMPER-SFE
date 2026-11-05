@@ -1,0 +1,25 @@
+# Build trees
+/build/
+build*/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+
+# Generated documentation (regenerate with: sh doc/build_docs.sh --pdf)
+doc/html/
+doc/latex/
+doc/SCAMPER_SFE_Manual.pdf
+libraries/*/doc/
+applications/*/doc/
+doxygen_warnings.log
+
+# Python
+__pycache__/
+
+# Editors
+*~
+\#*\#
+.\#*
+*.swp
+.vscode/
+.idea/

@@ -1,0 +1,6 @@
+TurboCodeConfigFile /volume1/scratch/eargones/HSFE_Data/best-found-turbo-code_rate_1_3.txt
+TurboCodeMaxDecodingIterations 16
+TrainSetSamplesFilesFolder /volume1/scratch/eargones/HSFE_Data/fingerVeinData_196/trainSet
+CodeOffsetStdDevFactor 1.13
+CodeOffsetStdDevOffset 0.23
+FuzzyCommitmentMinReliability 2.0

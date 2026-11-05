@@ -1,0 +1,40 @@
+# Doxygen configuration: SCAMPER SFE complete manual (every library and program, plus the system-level pages)
+#
+# Run from this folder:   doxygen Doxyfile
+# Output:                 html (HTML) and latex (LaTeX; PDF with "latexmk -pdf refman.tex" in latex)
+# build_docs.sh (in this folder) builds this manual and the per-module ones, and checks that there are no warnings.
+
+@INCLUDE               = Doxyfile.common
+
+PROJECT_NAME           = "SCAMPER SFE"
+PROJECT_NUMBER         = 1.0.0
+PROJECT_BRIEF          = "Biometric template protection with Hybrid Strengthened Turbo-Code Fuzzy Extractors"
+OUTPUT_DIRECTORY       = .
+INPUT                  = pages/mainpage.md \
+                         pages/technical_description.md \
+                         pages/modules.md \
+                         pages/fileformats.md \
+                         pages/building.md \
+                         ../libraries/GMMLite/doxygen/gmmlite.md \
+                         ../libraries/ThreadPool/doxygen/threadpool.md \
+                         ../libraries/TurboCodes/doxygen/turbocodes.md \
+                         ../libraries/HSTCFE/doxygen/hstcfe.md \
+                         ../libraries/MHSTCFE/doxygen/mhstcfe.md \
+                         ../applications/HybridTurboCodeStrengthenedFuzzyExtractor/doxygen/unimodal_program.md \
+                         ../applications/MultimodalHybridStrengthenedTurboCodeFuzzyExtractor/doxygen/multimodal_program.md \
+                         ../libraries/GMMLite/GMMLite_global.h \
+                         ../libraries/GMMLite/gmm.h \
+                         ../libraries/GMMLite/gmm.cpp \
+                         ../libraries/GMMLite/tests \
+                         ../libraries/ThreadPool \
+                         ../libraries/TurboCodes \
+                         ../libraries/HSTCFE \
+                         ../libraries/MHSTCFE \
+                         ../applications/HybridTurboCodeStrengthenedFuzzyExtractor/main.cpp \
+                         ../applications/MultimodalHybridStrengthenedTurboCodeFuzzyExtractor/main.cpp
+USE_MDFILE_AS_MAINPAGE = pages/mainpage.md
+IMAGE_PATH             = ../libraries/TurboCodes/doxygen
+STRIP_FROM_PATH        = ..
+INCLUDE_PATH           = ../libraries
+CITE_BIB_FILES         = bibliography.bib
+LATEX_EXTRA_STYLESHEET = doxygen_sfe.sty

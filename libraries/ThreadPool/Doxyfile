@@ -1,0 +1,19 @@
+# Doxygen configuration: ThreadPool manual
+#
+# Run from this folder:   doxygen Doxyfile
+# Output:                 doc/html (HTML) and doc/latex (LaTeX; PDF with "latexmk -pdf refman.tex" in doc/latex)
+# doc/build_docs.sh (repository root) builds every manual in dependency order and checks that there are no warnings.
+
+@INCLUDE               = ../../doc/Doxyfile.common
+
+PROJECT_NAME           = "ThreadPool"
+PROJECT_NUMBER         = 1.0.0
+PROJECT_BRIEF          = "Fixed-size thread pool used by the Strengthened Fuzzy Extractor software"
+OUTPUT_DIRECTORY       = doc
+INPUT                  = doxygen/threadpool.md \
+                         ThreadPool_global.h ThreadPool.hpp ThreadPool.cpp SafeQueue.hpp PendingTasksGuard.hpp
+USE_MDFILE_AS_MAINPAGE = doxygen/threadpool.md
+INCLUDE_PATH           = . ..
+CITE_BIB_FILES         = ../../doc/bibliography.bib
+LATEX_EXTRA_STYLESHEET = ../../doc/doxygen_sfe.sty
+GENERATE_TAGFILE       = doc/ThreadPool.tag

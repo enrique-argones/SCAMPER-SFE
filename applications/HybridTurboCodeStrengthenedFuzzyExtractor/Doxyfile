@@ -1,0 +1,24 @@
+# Doxygen configuration: HybridTurboCodeStrengthenedFuzzyExtractor manual
+#
+# Run from this folder:   doxygen Doxyfile
+# Output:                 doc/html (HTML) and doc/latex (LaTeX; PDF with "latexmk -pdf refman.tex" in doc/latex)
+# doc/build_docs.sh (repository root) builds every manual in dependency order and checks that there are no warnings.
+
+@INCLUDE               = ../../doc/Doxyfile.common
+
+PROJECT_NAME           = "HybridTurboCodeStrengthenedFuzzyExtractor"
+PROJECT_NUMBER         = 1.0.0
+PROJECT_BRIEF          = "Unimodal SFE enrollment and evaluation program"
+OUTPUT_DIRECTORY       = doc
+INPUT                  = doxygen/unimodal_program.md \
+                         main.cpp
+USE_MDFILE_AS_MAINPAGE = doxygen/unimodal_program.md
+INCLUDE_PATH           = . ..
+CITE_BIB_FILES         = ../../doc/bibliography.bib
+LATEX_EXTRA_STYLESHEET = ../../doc/doxygen_sfe.sty
+# Links to the manuals of the modules this one depends on (build them first: doc/build_docs.sh does it)
+TAGFILES               = \
+                         ../../libraries/GMMLite/doc/GMMLite.tag=../../../../libraries/GMMLite/doc/html \
+                         ../../libraries/ThreadPool/doc/ThreadPool.tag=../../../../libraries/ThreadPool/doc/html \
+                         ../../libraries/TurboCodes/doc/TurboCodes.tag=../../../../libraries/TurboCodes/doc/html \
+                         ../../libraries/HSTCFE/doc/HSTCFE.tag=../../../../libraries/HSTCFE/doc/html
