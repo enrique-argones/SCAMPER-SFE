@@ -97,9 +97,9 @@ Bit loading {#hstcfe_bitloading}
 -----------
 
 \ref HybridStrengthenedTurboCodeFuzzyExtractor::bitLoading assigns to each feature a capacity of 0 to \ref MAX_CAPACITY bits.
-It compares the effective noise \f$\tilde\sigma_d = a\,\sigma_d + b\f$ with thresholds that depend on the Turbo Code rate (1/3 to
+It compares the effective noise \f$\tilde\sigma_d = \alpha\,\sigma_d + \beta\f$ with thresholds that depend on the Turbo Code rate (1/3 to
 1/6); the thresholds come from the capacity of a PSK channel with Gaussian phase noise \cite argonesrua2026exploiting. The
-parameters \f$a\f$ (\c CodeOffsetStdDevFactor) and \f$b\f$ (\c CodeOffsetStdDevOffset) are safety margins that account for
+parameters \f$\alpha\f$ (\c CodeOffsetStdDevFactor) and \f$\beta\f$ (\c CodeOffsetStdDevOffset) are safety margins that account for
 deviations from the Gaussian model. More stable features carry more bits:
 
 - features with capacity \f$\geq 1\f$ go to the **code-offset** part;

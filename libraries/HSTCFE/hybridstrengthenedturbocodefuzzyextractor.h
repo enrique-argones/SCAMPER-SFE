@@ -270,9 +270,9 @@ public:
      */
     std::string turboCodeConfigFileName() const;
 
-    /// @brief Getter of \ref m_codeOffsetStdDevFactor. @return The factor \f$a\f$ of the bit-loading rule.
+    /// @brief Getter of \ref m_codeOffsetStdDevFactor. @return The factor \f$\alpha\f$ of the bit-loading rule.
     real_number codeOffsetStdDevFactor() const;
-    /// @brief Setter of \ref m_codeOffsetStdDevFactor. @param[in] newCodeOffsetStdDevFactor The factor \f$a\f$ of the bit-loading rule.
+    /// @brief Setter of \ref m_codeOffsetStdDevFactor. @param[in] newCodeOffsetStdDevFactor The factor \f$\alpha\f$ of the bit-loading rule.
     void setCodeOffsetStdDevFactor(real_number newCodeOffsetStdDevFactor);
 
     /// @brief Getter of \ref m_fuzzyCommitmentMinReliability. @return Minimum reliability required for a combined feature.
@@ -280,9 +280,9 @@ public:
     /// @brief Setter of \ref m_fuzzyCommitmentMinReliability. @param[in] newFuzzyCommitmentMinReliability Minimum reliability required for a combined feature.
     void setFuzzyCommitmentMinReliability(real_number newFuzzyCommitmentMinReliability);
 
-    /// @brief Getter of \ref m_codeOffsetStdDevOffset. @return The offset \f$b\f$ of the bit-loading rule.
+    /// @brief Getter of \ref m_codeOffsetStdDevOffset. @return The offset \f$\beta\f$ of the bit-loading rule.
     real_number codeOffsetStdDevOffset() const;
-    /// @brief Setter of \ref m_codeOffsetStdDevOffset. @param[in] newCodeOffsetStdDevOffset The offset \f$b\f$ of the bit-loading rule.
+    /// @brief Setter of \ref m_codeOffsetStdDevOffset. @param[in] newCodeOffsetStdDevOffset The offset \f$\beta\f$ of the bit-loading rule.
     void setCodeOffsetStdDevOffset(real_number newCodeOffsetStdDevOffset);
 
     /// @brief Getter of \ref m_uniformNormalizer. @return Pointer to the uniform (empirical CDF) normalizer, one map per feature
@@ -297,7 +297,7 @@ protected:
      * @brief Bit loading: decides how many codeword bits each feature carries in the code-offset part.
      *
      * For each feature with normalized standard deviation \f$\sigma_d\f$, the effective noise
-     * \f$\tilde\sigma_d = a\,\sigma_d + b\f$ (with \f$a\f$ = \ref m_codeOffsetStdDevFactor and \f$b\f$ =
+     * \f$\tilde\sigma_d = \alpha\,\sigma_d + \beta\f$ (with \f$\alpha\f$ = \ref m_codeOffsetStdDevFactor and \f$\beta\f$ =
      * \ref m_codeOffsetStdDevOffset) is compared with rate-dependent thresholds:
      *
      * | Code rate | 0 bits if \f$\tilde\sigma >\f$ | 1 bit if \f$\tilde\sigma >\f$ | 2 bits if \f$\tilde\sigma >\f$ | 3 bits if \f$\tilde\sigma >\f$ | otherwise |
@@ -522,11 +522,11 @@ protected:
      */
     uint m_inputDimensionality;
     /**
-     * @brief Offset \f$b\f$ of the bit-loading rule \f$\tilde\sigma = a\,\sigma + b\f$ (see \ref bitLoading).
+     * @brief Offset \f$\beta\f$ of the bit-loading rule \f$\tilde\sigma = \alpha\,\sigma + \beta\f$ (see \ref bitLoading).
      */
     real_number m_codeOffsetStdDevOffset;
     /**
-     * @brief Factor \f$a\f$ of the bit-loading rule \f$\tilde\sigma = a\,\sigma + b\f$ (see \ref bitLoading).
+     * @brief Factor \f$\alpha\f$ of the bit-loading rule \f$\tilde\sigma = \alpha\,\sigma + \beta\f$ (see \ref bitLoading).
      */
     real_number m_codeOffsetStdDevFactor;
     /**

@@ -54,8 +54,8 @@ FuzzyCommitmentMinReliability  2.0
 | \c TurboCodeConfigFile | Turbo Code configuration file (\ref ff_turbocode). Its rate must be 1/3, 1/4, 1/5 or 1/6. |
 | \c TurboCodeMaxDecodingIterations | Maximum number of Turbo decoding iterations during reproduction. |
 | \c TrainSetSamplesFilesFolder | Folder of samples files used to estimate the empirical CDF of each feature. |
-| \c CodeOffsetStdDevFactor | Factor \f$a\f$ of the bit-loading rule \f$\tilde\sigma = a\sigma + b\f$. A larger value gives fewer code-offset bits. |
-| \c CodeOffsetStdDevOffset | Offset \f$b\f$ of the bit-loading rule. |
+| \c CodeOffsetStdDevFactor | Factor \f$\alpha\f$ of the bit-loading rule \f$\tilde\sigma = \alpha\sigma + \beta\f$. A larger value gives fewer code-offset bits. |
+| \c CodeOffsetStdDevOffset | Offset \f$\beta\f$ of the bit-loading rule. |
 | \c FuzzyCommitmentMinReliability | Minimum \f$|\mu|/\sigma\f$ of every combined fuzzy-commitment feature. A larger value gives fewer, more reliable combined features. |
 
 Multimodal general configuration file {#ff_mgeneral}
@@ -95,8 +95,8 @@ vector (length, then elements).
 |---|-------|-------|
 | 1 | \c UserId | Subject identifier |
 | 2 | \c InputDimensionality | Number of features \f$D\f$ |
-| 3 | \c CodeOffsetStdDevOffset | \f$b\f$ |
-| 4 | \c CodeOffsetStdDevFactor | \f$a\f$ |
+| 3 | \c CodeOffsetStdDevOffset | \f$\beta\f$ |
+| 4 | \c CodeOffsetStdDevFactor | \f$\alpha\f$ |
 | 5 | \c FuzzyCommitmentMinReliability | Reliability threshold |
 | 6 | \c CodeOffsetFeaturesCount | Number of code-offset features |
 | 7 | \c CodeOffsetFeaturesIndexes | Vector: indexes of the code-offset features |

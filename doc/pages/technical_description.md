@@ -71,7 +71,7 @@ Enrollment (Gen) runs these steps for every subject (\ref hstcfe_gen):
    deviation \f$\sigma_d\f$ of the phase over the enrollment samples describe the subject and its intra-subject noise
    (\ref hstcfe_normalization).
 2. **Bit loading.** The number of bits that a feature can carry depends on its noise. The effective noise
-   \f$a\sigma_d + b\f$, where \f$a\f$ and \f$b\f$ are safety margins, is compared with thresholds derived for the PSK channel
+   \f$\alpha\sigma_d + \beta\f$, where \f$\alpha\f$ and \f$\beta\f$ are safety margins, is compared with thresholds derived for the PSK channel
    and the rate of the code: reliable features carry 1 to 3 bits, unreliable features none \cite argonesrua2026exploiting
    (\ref hstcfe_bitloading).
 3. **Feature fusion.** The unreliable features are greedily grouped into linear combinations whose signal-to-noise ratio is

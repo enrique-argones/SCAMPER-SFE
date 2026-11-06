@@ -67,7 +67,7 @@ and renewable. The SFE was realized with soft-decoded Turbo Codes and user-speci
 1. **Uncoupling.** Every feature is mapped to the phase θ = 2π F̂(x), where F̂ is the empirical CDF of the feature on a
    training population [1]. The mean and standard deviation of the phase over the enrollment samples describe the subject and
    its intra-subject noise.
-2. **Bit loading.** The effective noise a·σ + b of each feature (a, b: safety margins) is compared with thresholds derived for
+2. **Bit loading.** The effective noise α·σ + β of each feature (α, β: safety margins) is compared with thresholds derived for
    the PSK channel and the rate of the code: reliable features carry 1 to 3 bits, unreliable features none [3].
 3. **Feature fusion.** Unreliable features are greedily grouped into linear combinations of maximal signal-to-noise ratio
    until each combination reaches a minimum reliability; each combination carries one bit [3].
