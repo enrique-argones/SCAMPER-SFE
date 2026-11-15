@@ -27,3 +27,12 @@ std::unique_ptr<HybridStrengthenedTurboCodeFuzzyExtractor>
 std::unique_ptr<HybridStrengthenedTurboCodeFuzzyExtractor>
     load_user_extractor(const HybridStrengthenedTurboCodeFuzzyExtractor &general,
                         rust::Str folder, rust::Str user_id);
+
+
+rust::Vec<uint8_t> get_user_specific_data_wrapper(
+    HybridStrengthenedTurboCodeFuzzyExtractor &fe);
+
+void load_user_specific_data_wrapper(
+        HybridStrengthenedTurboCodeFuzzyExtractor &fe,
+        rust::Vec<uint8_t> data);
+

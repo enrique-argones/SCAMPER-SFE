@@ -59,11 +59,14 @@ pub mod ffi {
             general: &HybridStrengthenedTurboCodeFuzzyExtractor,
         ) -> UniquePtr<HybridStrengthenedTurboCodeFuzzyExtractor>;
 
-        fn load_user_extractor(
-            general: &HybridStrengthenedTurboCodeFuzzyExtractor,
-            folder: &str,
-            user_id: &str,
-        ) -> Result<UniquePtr<HybridStrengthenedTurboCodeFuzzyExtractor>>;    
+        fn get_user_specific_data_wrapper(
+            fe: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
+        ) -> Vec<u8>;
+
+
+        fn load_user_specific_data_wrapper(
+            fe: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
+            data: Vec<u8>);
     }
 }
 
@@ -126,26 +129,25 @@ impl HSTCFE {
         ffi::turboCodeInputMessage_wrapper(self.inner.pin_mut())
     }
 
-    pub fn save_user_specific_data(&mut self, folder: &Path, user_id: &str) -> Result<(), cxx::Exception> {
+    /*pub fn save_user_specific_data(&mut self, folder: &Path, user_id: &str) -> Result<(), cxx::Exception> {
         std::fs::create_dir_all(folder).expect("could not create template folder");
         // The loader takes the user ID from the file name
         let file = folder.join(format!("{user_id}.userSpecificHSTCFE"));
         let file = file.to_str().expect("file path is not valid UTF-8");
         cxx::let_cxx_string!(file_cpp = file);
         self.inner.pin_mut().saveUserSpecificData(&file_cpp)
-    }
+    }*/
 
-    pub fn load_user_extractor(
-        general: &Self,
-        folder: &Path,
-        user_id: &str,
-    ) -> Result<Self, cxx::Exception> {
-        let folder = folder.to_str().expect("folder path is not valid UTF-8");
-        let inner = ffi::load_user_extractor(&general.inner, folder, user_id)
-            .expect("it should work");
-        Ok(Self {
-            inner,
-        })
+    pub fn get_user_specific_data(&mut self) -> Vec<u8>{
+        ffi::get_user_specific_data_wrapper(self.inner.pin_mut())
+ 
+    }
+    pub fn load_user_specific_extractor(general: &Self, data: Vec<u8>) -> Self{
+        let mut user_extractor = ffi::copy_extractor(&general.inner);
+        ffi::load_user_specific_data_wrapper(user_extractor.pin_mut(), data);
+        Self {
+            inner: user_extractor,
+        }
     }
 }
 

@@ -847,46 +847,58 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     if (!file) {
         throw std::ifstream::failure(std::string("Unable to open file ") + fileName + std::string(" for reading."));
     }
+    readUserSpecificData(file);
+    file.close();
+}
+
+void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificDataFromBlob(const std::vector<uint8_t> &blob)
+{
+    std::istringstream ss(std::string(blob.begin(), blob.end()));
+    readUserSpecificData(ss);
+}
+
+void HybridStrengthenedTurboCodeFuzzyExtractor::readUserSpecificData(std::istream &file)
+{
     std::string label;
     file >> label;
     if (label != std::string("UserId")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"UserId\", found label \"") + label + std::string("\""));
     }
     file >> m_userId;
     file >> label;
     if (label != std::string("InputDimensionality")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") + 
                                std::string(": expecting label \"InputDimensionality\", found label \"") + label + std::string("\""));
     }
     file >> m_inputDimensionality;
     file >> label;
     if (label != std::string("CodeOffsetStdDevOffset")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetStdDevOffset\", found label \"") + label + std::string("\""));
     }
     file >> m_codeOffsetStdDevOffset;
     file >> label;
     if (label != std::string("CodeOffsetStdDevFactor")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetStdDevFactor\", found label \"") + label + std::string("\""));
     }
     file >> m_codeOffsetStdDevFactor;
     file >> label;
     if (label != std::string("FuzzyCommitmentMinReliability")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") + 
                                std::string(": expecting label \"FuzzyCommitmentMinReliability\", found label \"") + label + std::string("\""));
     }
     file >> m_fuzzyCommitmentMinReliability;
     file >> label;
     if (label != std::string("CodeOffsetFeaturesCount")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetFeaturesCount\", found label \"") + label + std::string("\""));
     }
     file >> m_codeOffsetFeaturesCount;
     file >> label;
     if (label != std::string("CodeOffsetFeaturesIndexes")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetFeaturesIndexes\", found label \"") + label + std::string("\""));
     }
     unsigned int vectorSize;
@@ -897,13 +909,13 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     }
     file >> label;
     if (label != std::string("CodeOffsetTotalCapacity")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetTotalCapacity\", found label \"") + label + std::string("\""));
     }
     file >> m_codeOffsetTotalCapacity;
     file >> label;
     if (label != std::string("CodeOffsetFeaturesCapacities")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetFeaturesCapacities\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -914,7 +926,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
 
     file >> label;
     if (label != std::string("CodeOffsetEnrollmentSamplesStdDev")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CodeOffsetEnrollmentSamplesStdDev\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -925,7 +937,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
 
     file >> label;
     if (label != std::string("Commitment")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"Commitment\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -935,13 +947,13 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     }
     file >> label;
     if (label != std::string("FuzzyCommitmentTotalCapacity")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"FuzzyCommitmentTotalCapacity\", found label \"") + label + std::string("\""));
     }
     file >> m_fuzzyCommitmentTotalCapacity;
     file >> label;
     if (label != std::string("FuzzyCommitmentFeaturesIndexes")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"FuzzyCommitmentFeaturesIndexes\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -951,13 +963,13 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     }
     file >> label;
     if (label != std::string("CombinedFeaturesCount")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CombinedFeaturesCount\", found label \"") + label + std::string("\""));
     }
     file >> m_combinedFeaturesCount;
     file >> label;
     if (label != std::string("CombinedFeaturesIndexes")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CombinedFeaturesIndexes\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -972,7 +984,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     }
     file >> label;
     if (label != std::string("CombinedFeaturesWeights")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CombinedFeaturesWeights\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -987,7 +999,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     }
     file >> label;
     if (label != std::string("CombinedFeaturesStdDevs")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"CombinedFeaturesStdDevs\", found label \"") + label + std::string("\""));
     }
     file >> vectorSize;
@@ -1002,13 +1014,13 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     }
     file >> label;
     if (label != std::string("FuzzyExtractorCapacity")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"FuzzyExtractorCapacity\", found label \"") + label + std::string("\""));
     }
     file >> m_fuzzyExtractorCapacity;
     file >> label;
     if (label != std::string("ValidForReproduce")) {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting label \"ValidForReproduce\", found label \"") + label + std::string("\""));
     }
     file >> label;
@@ -1017,14 +1029,14 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
     } else if (label == std::string("false")) {
         m_validForReproduce = false;
     } else {
-        throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+        throw std::logic_error(std::string("Error processing user specific data file ") +
                                std::string(": expecting value of \"ValidForReproduce\" to be either \"true\" or \"false\", found label \"") +
                                label + std::string("\""));
     }
     if (m_validForReproduce) {
         file >> label;
         if (label != std::string("TurboCodePuncturingPatterns")) {
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"TurboCodePuncturingPatterns\", found label \"") + label + std::string("\""));
         }
         binary_polynomial_vector turboCodePuncturingPatterns;
@@ -1054,7 +1066,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
         m_turboCode.setPuncturingPatterns(turboCodePuncturingPatterns);
         file >> label;
         if (label != std::string("SymbolsPermutation")) {
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"SymbolsPermutation\", found label \"") + label + std::string("\""));
         }
         file >> vectorSize;
@@ -1081,7 +1093,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
         }
         file >> label;
         if (label != std::string("SymbolIndexes")) {
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"SymbolIndexes\", found label \"") + label + std::string("\""));
         }
         file >> vectorSize;
@@ -1091,7 +1103,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
         }
         file >> label;
         if (label != std::string("TurboCodeInterleavers")) {
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"TurboCodeInterleavers\", found label \"") + label + std::string("\""));
         }
         uint_vector_vector turboCodeInterleavers;
@@ -1108,13 +1120,13 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
         m_turboCode.setInterleavers(turboCodeInterleavers);
         file >> label;
         if (label != std::string("TurboCodeInputMessageLength")) {
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"TurboCodeInputMessageLength\", found label \"") + label + std::string("\""));
         }
         file >> m_turboCodeInputMessageLength;
         file >> label;
         if (label != std::string("TurboCodeInputMessage")) {
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"TurboCodeInputMessage\", found label \"") + label + std::string("\""));
         }
         file >> vectorSize;
@@ -1139,10 +1151,9 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
         if (label != std::string("TurboCodePuncturingPatterns")) {
             if (label == std::string("TurboCodeInputMessage")) {
                 setupTurboCodeNoiseConditionalPDFs();
-                file.close();
                 return;
             }
-            throw std::logic_error(std::string("Error processing user specific data file ") + fileName +
+            throw std::logic_error(std::string("Error processing user specific data file ") +
                                    std::string(": expecting label \"TurboCodePuncturingPatterns\", found label \"") + label + std::string("\""));
         }
         file >> vectorSize;
@@ -1171,15 +1182,11 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData(const std::
         m_turboCode.setPuncturingPatterns(puncturingPatterns);
         setupTurboCodeNoiseConditionalPDFs();
     }
-    file.close();
 }
 
-void HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecificData(const std::string &fileName)
+
+void HybridStrengthenedTurboCodeFuzzyExtractor::writeUserSpecificData(std::ostream &file)
 {
-    std::ofstream file(fileName);
-    if (!file) {
-        throw std::ofstream::failure(std::string("Unable to open file ") + fileName + std::string(" for writing."));
-    }
     file << "UserId " << m_userId << std::endl;
     file << "InputDimensionality " << m_inputDimensionality << std::endl;
     file << "CodeOffsetStdDevOffset " << m_codeOffsetStdDevOffset << std::endl;
@@ -1363,8 +1370,27 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecificData(const std::
     } else {
         file << "false" << std::endl;
     }
+}
+
+void HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecificData(const std::string &fileName)
+{
+    std::ofstream file(fileName);
+    if (!file) {
+        throw std::ofstream::failure(std::string("Unable to open file ") + fileName + std::string(" for writing."));
+    }
+    
+    writeUserSpecificData(file);
     file.close();
 }
+
+std::vector<uint8_t> HybridStrengthenedTurboCodeFuzzyExtractor::getUserSpecificData()
+{
+    std::ostringstream ss;
+    writeUserSpecificData(ss);
+    const std::string s = ss.str();
+    return std::vector<uint8_t>(s.begin(), s.end());
+}
+
 
 void HybridStrengthenedTurboCodeFuzzyExtractor::saveKey(const std::string &fileName) {
     std::ofstream file(fileName);
@@ -1384,7 +1410,6 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::saveKey(const std::string &fileN
             file << std::endl;
         }
     }
-    file.close();
 }
 
 void HybridStrengthenedTurboCodeFuzzyExtractor::saveGeneralData(const std::string &fileName)

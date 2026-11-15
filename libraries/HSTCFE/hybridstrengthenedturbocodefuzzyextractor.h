@@ -173,7 +173,7 @@ public:
     virtual binary_polynomial reproduce(const real_number_vector &probeSample);
 
     /**
-     * @brief Loads the user-specific helper data written by \ref saveUserSpecificData and rebuilds the Turbo Code channel model.
+     * @brief wrapper for \ref readUserSpecificData to load user specific data from a file.
      *
      * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was copied from
      * an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual (\c doc/html) describes the file layout.
@@ -184,8 +184,28 @@ public:
     void loadUserSpecificData(const std::string &fileName);
 
     /**
-     * @brief Writes the user-specific helper data (feature split, commitment, combination weights, Turbo Code interleavers and
-     * puncturing patterns, symbol permutation) to a text file.
+     * @brief Loads the user-specific helper data written by \ref getUserSpecificData and rebuilds the Turbo Code channel model.
+     *
+     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was copied from
+     * an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual (\c doc/html) describes the file layout.
+     * @param[in] std::ifstream stream of user-specific data.
+     * @exception std::logic_error if a label or value is not the expected one.
+     */
+    void readUserSpecificData(std::istream &file);
+
+    /**
+     * @brief wrapper for \ref readUserSpecificData to load from a blob of data.
+     *
+     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was copied from
+     * an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual (\c doc/html) describes the file layout.
+     * @param[in] fileName Name of the user-specific data file (\c .userSpecificHSTCFE by convention).
+     * @exception std::ifstream::failure if the file cannot be opened.
+     * @exception std::logic_error if a label or value is not the expected one.
+     */
+    void loadUserSpecificDataFromBlob(const std::vector<uint8_t> &blob);
+
+    /**
+     * @brief wrapper of writeUserSpecificData to save data to a specific file
      * @param[in] fileName Name of the output file (\c .userSpecificHSTCFE by convention).
      * @exception std::ofstream::failure if the file cannot be opened.
      * @warning The file also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
@@ -194,12 +214,30 @@ public:
     void saveUserSpecificData(const std::string &fileName);
 
     /**
+     * @brief Writes the user-specific helper data (feature split, commitment, combination weights, Turbo Code interleavers and
+     * puncturing patterns, symbol permutation) to a text file.
+     * @param[in] std::ofstream stream to save data to
+     * @warning The file also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
+     * the reproduced keys. A deployed system must not store it.
+     */
+    void writeUserSpecificData(std::ostream &file);
+
+    /**
+     * @brief wrapper of writeUserSpecificData to get a blob of binary data
+     * @warning The file also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
+     * the reproduced keys. A deployed system must not store it.
+     * @return Binary string representing the user specific data.
+     */
+    std::vector<uint8_t> getUserSpecificData();
+
+    /**
      * @brief Writes the general configuration file, in the format read by \ref loadGeneralData.
      *
      * The six label/value pairs are written in this order: \c TurboCodeConfigFile, \c TurboCodeMaxDecodingIterations,
      * \c TrainSetSamplesFilesFolder, \c CodeOffsetStdDevFactor, \c CodeOffsetStdDevOffset and \c FuzzyCommitmentMinReliability.
      * @param[in] fileName Name of the output file.
      * @exception std::ofstream::failure if the file cannot be opened.
+     *
      */
     virtual void saveGeneralData(const std::string &fileName);
 

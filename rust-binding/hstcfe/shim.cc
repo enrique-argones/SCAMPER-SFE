@@ -109,3 +109,24 @@ std::unique_ptr<HybridStrengthenedTurboCodeFuzzyExtractor>
     }
     throw std::runtime_error("load_user_extractor: no template for user " + id + " in " + dir);
 }
+
+rust::Vec<uint8_t> get_user_specific_data_wrapper(HybridStrengthenedTurboCodeFuzzyExtractor &fe)
+{
+    std::vector<uint8_t> data = fe.getUserSpecificData();
+    rust::Vec<uint8_t> out;
+    out.reserve(data.size());
+    for (uint8_t b : data) {
+        out.push_back(b);
+    }
+    return out;
+}
+
+void load_user_specific_data_wrapper(
+        HybridStrengthenedTurboCodeFuzzyExtractor &fe,
+        rust::Vec<uint8_t> data)
+{    
+    std::vector<uint8_t> blob(data.begin(), data.end());
+    fe.loadUserSpecificDataFromBlob(blob);
+}
+
+

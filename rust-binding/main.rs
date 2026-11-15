@@ -22,11 +22,10 @@ pub fn main() {
     general.set_user_id("subject_0002");
     general.generate(enrollment);
     let key_gen = general.turbocode_input_message();
-    general.save_user_specific_data(&save_dir,"subject_0002")
-        .expect("save correctly");
 
-    let mut user = HSTCFE::load_user_extractor(&general, &save_dir, "subject_0002")
-        .expect("load correctly");
+    let user_specific_data = general.get_user_specific_data();
+
+    let mut user = HSTCFE::load_user_specific_extractor(&general, user_specific_data);
     let key_gen_loaded = user.turbocode_input_message();
 
     if !general.valid_for_reproduce() { 
