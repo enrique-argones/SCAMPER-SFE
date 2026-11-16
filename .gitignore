@@ -16,6 +16,9 @@ doxygen_warnings.log
 # Python
 __pycache__/
 
+# Rust
+target/
+
 # Editors
 *~
 \#*\#
