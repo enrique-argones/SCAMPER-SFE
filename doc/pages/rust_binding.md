@@ -117,3 +117,5 @@ Security {#rust_security}
 The binding inherits the research-only caveats of the C++ code (\ref td_security): the template returned by
 \c get_user_specific_data contains the secret key (label \c TurboCodeInputMessage), and \c turbocode_input_message returns it.
 A deployed system must remove the key from the stored template and must not keep it in memory longer than needed.
+The \ref integrators_guide_page describes how to derive and verify application keys and lists the issues that block a
+deployment.

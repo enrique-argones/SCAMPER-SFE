@@ -67,6 +67,8 @@ Where to start {#main_start}
 - \subpage building lists the dependencies and explains how to compile, test and install the software and how to generate
   this documentation.
 - \subpage rust_binding_page explains how to build and use the extractor from Rust.
+- \subpage integrators_guide_page is for the engineers who use the extractor as a cryptographic building block: the contract of
+  the Rust API, key derivation and verification, and the issues that block a deployment.
 
 Minimal example {#main_example}
 ===============
@@ -109,4 +111,5 @@ project and tested end to end on synthetic data.
 
 After 1.0.0 (November 2026): Rust binding of the unimodal extractor (\ref rust_binding_page), and in-memory storage of the
 user-specific helper data (\ref HybridStrengthenedTurboCodeFuzzyExtractor::getUserSpecificData,
-\ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificDataFromBlob).
+\ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificDataFromBlob), and guide for cryptographic integrators
+(\ref integrators_guide_page).

@@ -16,6 +16,7 @@ INPUT                  = pages/mainpage.md \
                          pages/fileformats.md \
                          pages/building.md \
                          pages/rust_binding.md \
+                         pages/integrators_guide.md \
                          ../libraries/GMMLite/doxygen/gmmlite.md \
                          ../libraries/ThreadPool/doxygen/threadpool.md \
                          ../libraries/TurboCodes/doxygen/turbocodes.md \
