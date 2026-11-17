@@ -159,6 +159,17 @@ The helper data (\ref HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecifi
 capacities, the noise levels, \f$\mathbf{c}\f$, the committed weights, the interleavers, the puncturing patterns and the symbol
 permutation.
 
+The helper data can be stored in a file or kept in memory:
+
+| Destination | Write | Read |
+|-------------|-------|------|
+| File (\c .userSpecificHSTCFE) | \ref HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecificData | \ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData |
+| Memory buffer (\c std::vector<uint8_t>) | \ref HybridStrengthenedTurboCodeFuzzyExtractor::getUserSpecificData | \ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificDataFromBlob |
+| Any stream | \ref HybridStrengthenedTurboCodeFuzzyExtractor::writeUserSpecificData | \ref HybridStrengthenedTurboCodeFuzzyExtractor::readUserSpecificData |
+
+All of them use the same text format, so a buffer holds exactly the bytes of the corresponding file. The in-memory functions
+are used by the Rust binding (\c rust-binding), which keeps templates in memory.
+
 Reproduction (Rep) {#hstcfe_rep}
 ==================
 

@@ -92,6 +92,8 @@ The dependency order is GMMLite, ThreadPool, TurboCodes, HSTCFE, MHSTCFE, and th
 the \c _Debug libraries. If CMake reports that a library or header was not found, the module that provides it has not been
 installed under the prefixes it searches.
 
+The Rust binding is built with Cargo instead; see \ref rust_build.
+
 Building the documentation {#build_docs}
 ==========================
 

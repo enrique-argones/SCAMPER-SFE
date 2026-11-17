@@ -88,6 +88,8 @@ User-specific helper data (.userSpecificHSTCFE) {#ff_userspecific}
 
 Written by \ref HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecificData and read by
 \ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificData. Unimodal and multimodal templates use the same format.
+The same text is produced in memory by \ref HybridStrengthenedTurboCodeFuzzyExtractor::getUserSpecificData and read from memory
+by \ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificDataFromBlob (used by the \ref rust_binding_page).
 A vector is written as its length followed by its elements. A vector of vectors is written as its length followed by each inner
 vector (length, then elements).
 

@@ -1,5 +1,6 @@
 use std::path::Path;
 
+/// Raw cxx bridge to the C++ samples reader.
 #[cxx::bridge]
 pub mod ffi {
     struct ParsedSamples {
@@ -21,6 +22,11 @@ pub mod ffi {
     }
 }
 
+/// Reads a samples file (header `N D`, then `N` lines of `D` values; see the "File formats" page of the manual) and
+/// returns one `Vec<f64>` per sample.
+///
+/// # Panics
+/// If the path is not valid UTF-8. A C++ error (missing or malformed file) terminates the process.
 pub fn parse_samples_file(
     file_path: &Path,
 ) -> Vec<Vec<f64>> {

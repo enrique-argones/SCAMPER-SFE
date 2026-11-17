@@ -34,6 +34,7 @@ Components {#main_components}
 | MHSTCFE | Library | HSTCFE | \ref mhstcfe_page |
 | HybridTurboCodeStrengthenedFuzzyExtractor | Program | HSTCFE, argagg | \ref unimodal_program_page |
 | MultimodalHybridStrengthenedTurboCodeFuzzyExtractor | Program | MHSTCFE, argagg | \ref multimodal_program_page |
+| sfe (Rust crate) | Rust binding | HSTCFE, cxx | \ref rust_binding_page |
 
 \dot
 digraph components {
@@ -51,7 +52,8 @@ digraph components {
   TC -> GL; TC -> ARMA;
   HS -> TC; HS -> TP;
   MH -> HS;
-  P1 -> HS; P2 -> MH;
+  RS   [label="sfe\n(Rust binding)", URL="\ref rust_binding_page", fillcolor="#eaf6ee", color="#3b8a57"];
+  P1 -> HS; P2 -> MH; RS -> HS;
 }
 \enddot
 
@@ -64,6 +66,7 @@ Where to start {#main_start}
 - \subpage fileformats describes every input and output file (samples, configurations, helper data, keys, results).
 - \subpage building lists the dependencies and explains how to compile, test and install the software and how to generate
   this documentation.
+- \subpage rust_binding_page explains how to build and use the extractor from Rust.
 
 Minimal example {#main_example}
 ===============
@@ -103,3 +106,7 @@ ThreadPool library, and the TurboCodes, HSTCFE and MHSTCFE libraries and the two
 developed in separate repositories. The libraries use GMMLite for their Gaussian mixture models; the earlier versions, based on
 the CHMM library, produced bit-identical results (see \ref gmmlite_equivalence). The whole software is built by one CMake
 project and tested end to end on synthetic data.
+
+After 1.0.0 (November 2026): Rust binding of the unimodal extractor (\ref rust_binding_page), and in-memory storage of the
+user-specific helper data (\ref HybridStrengthenedTurboCodeFuzzyExtractor::getUserSpecificData,
+\ref HybridStrengthenedTurboCodeFuzzyExtractor::loadUserSpecificDataFromBlob).

@@ -1,3 +1,9 @@
+//! Minimal example of the Rust binding: enrolls `subject_0002`, exports its template to memory, rebuilds a user
+//! extractor from it and reproduces the key from the first probe sample. Prints `true` if the key is reproduced.
+//!
+//! Run with `cargo run --bin minimal`. Expects `generalConfigFile.txt` in the current folder and the samples files
+//! `../fingerVeinData_196/testSet/{enrollment,probe}/subject_0002.txt`, relative to the repository folder.
+
 use sfe::HSTCFE;
 use std::path::PathBuf;
 

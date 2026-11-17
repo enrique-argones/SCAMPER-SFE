@@ -14,11 +14,14 @@
 #include <TurboCodes/turbocode.h>
 #include <TurboCodes/psk.h>
 #include <TurboCodes/pam2.h>
+#include <cstdint>
+#include <iosfwd>
 #include <random>
 #include <mutex>
 #include <memory>
 #include <string>
 #include <stdexcept>
+#include <vector>
 
 /// Enables the HSTCFE-specific debugging blocks (currently only commented-out traces).
 #define HSTCFE_DEBUG 1
@@ -173,60 +176,81 @@ public:
     virtual binary_polynomial reproduce(const real_number_vector &probeSample);
 
     /**
-     * @brief wrapper for \ref readUserSpecificData to load user specific data from a file.
+     * @brief Loads the user-specific helper data from a file written by \ref saveUserSpecificData.
      *
-     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was copied from
-     * an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual (\c doc/html) describes the file layout.
+     * Opens the file and calls \ref readUserSpecificData. The object must already hold the general data (Turbo Code generators
+     * and uniform normalizer), typically because it was copied from an object on which \ref loadGeneralData was called. The
+     * "File formats" page of the complete manual (\c doc/html) describes the file layout.
      * @param[in] fileName Name of the user-specific data file (\c .userSpecificHSTCFE by convention).
      * @exception std::ifstream::failure if the file cannot be opened.
      * @exception std::logic_error if a label or value is not the expected one.
+     * @see \ref loadUserSpecificDataFromBlob for the in-memory equivalent.
      */
     void loadUserSpecificData(const std::string &fileName);
 
     /**
-     * @brief Loads the user-specific helper data written by \ref getUserSpecificData and rebuilds the Turbo Code channel model.
+     * @brief Reads the user-specific helper data from a stream and rebuilds the Turbo Code channel model.
      *
-     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was copied from
-     * an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual (\c doc/html) describes the file layout.
-     * @param[in] std::ifstream stream of user-specific data.
-     * @exception std::logic_error if a label or value is not the expected one.
+     * This is the parser used by \ref loadUserSpecificData (file) and \ref loadUserSpecificDataFromBlob (memory). It reads the
+     * text format written by \ref writeUserSpecificData, that is the user identifier, the feature split, the commitment, the combination
+     * weights and, if the template is valid for reproduction, the Turbo Code puncturing patterns and interleavers, the symbol
+     * permutation and the secret message. It then sets the Turbo Code noise model of every symbol.
+     *
+     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was
+     * copied from an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual
+     * (\c doc/html) describes the layout.
+     * @param[in,out] file Input stream positioned at the beginning of the user-specific data.
+     * @exception std::logic_error if a label or value is not the expected one. The message does not contain the name of the
+     * source, since the stream may not be a file.
      */
     void readUserSpecificData(std::istream &file);
 
     /**
-     * @brief wrapper for \ref readUserSpecificData to load from a blob of data.
+     * @brief Loads the user-specific helper data from a memory buffer returned by \ref getUserSpecificData.
      *
-     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was copied from
-     * an object on which \ref loadGeneralData was called. The "File formats" page of the complete manual (\c doc/html) describes the file layout.
-     * @param[in] fileName Name of the user-specific data file (\c .userSpecificHSTCFE by convention).
-     * @exception std::ifstream::failure if the file cannot be opened.
+     * Wraps the buffer in a string stream and calls \ref readUserSpecificData. The buffer holds the same bytes as a
+     * \c .userSpecificHSTCFE file, so a file read into memory can be loaded too. This is the entry point used by the Rust
+     * binding (folder \c rust-binding, "Rust binding" page of the complete manual), which keeps templates in memory instead of
+     * in files.
+     *
+     * The object must already hold the general data (Turbo Code generators and uniform normalizer), typically because it was
+     * copied from an object on which \ref loadGeneralData was called.
+     * @param[in] blob User-specific data, as returned by \ref getUserSpecificData.
      * @exception std::logic_error if a label or value is not the expected one.
      */
     void loadUserSpecificDataFromBlob(const std::vector<uint8_t> &blob);
 
     /**
-     * @brief wrapper of writeUserSpecificData to save data to a specific file
+     * @brief Saves the user-specific helper data to a file, in the format read by \ref loadUserSpecificData.
+     *
+     * Opens the file and calls \ref writeUserSpecificData.
      * @param[in] fileName Name of the output file (\c .userSpecificHSTCFE by convention).
      * @exception std::ofstream::failure if the file cannot be opened.
      * @warning The file also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
      * the reproduced keys. A deployed system must not store it.
+     * @see \ref getUserSpecificData for the in-memory equivalent.
      */
     void saveUserSpecificData(const std::string &fileName);
 
     /**
      * @brief Writes the user-specific helper data (feature split, commitment, combination weights, Turbo Code interleavers and
-     * puncturing patterns, symbol permutation) to a text file.
-     * @param[in] std::ofstream stream to save data to
-     * @warning The file also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
+     * puncturing patterns, symbol permutation) to a stream, in the text format read by \ref readUserSpecificData.
+     *
+     * This is the writer used by \ref saveUserSpecificData (file) and \ref getUserSpecificData (memory).
+     * @param[in,out] file Output stream.
+     * @warning The output also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
      * the reproduced keys. A deployed system must not store it.
      */
     void writeUserSpecificData(std::ostream &file);
 
     /**
-     * @brief wrapper of writeUserSpecificData to get a blob of binary data
-     * @warning The file also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
+     * @brief Returns the user-specific helper data as a memory buffer, in the format read by \ref loadUserSpecificDataFromBlob.
+     *
+     * Calls \ref writeUserSpecificData on a string stream. The buffer holds exactly the bytes that \ref saveUserSpecificData
+     * would write to a \c .userSpecificHSTCFE file (ASCII text, not a binary encoding).
+     * @return The user-specific data.
+     * @warning The buffer also contains the secret message (\c TurboCodeInputMessage label), so that experiments can check
      * the reproduced keys. A deployed system must not store it.
-     * @return Binary string representing the user specific data.
      */
     std::vector<uint8_t> getUserSpecificData();
 
@@ -237,7 +261,6 @@ public:
      * \c TrainSetSamplesFilesFolder, \c CodeOffsetStdDevFactor, \c CodeOffsetStdDevOffset and \c FuzzyCommitmentMinReliability.
      * @param[in] fileName Name of the output file.
      * @exception std::ofstream::failure if the file cannot be opened.
-     *
      */
     virtual void saveGeneralData(const std::string &fileName);
 

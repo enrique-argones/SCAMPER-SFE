@@ -14,6 +14,7 @@ Strengthened Fuzzy Extractor.
 - One **soft-decoded Turbo Code** per subject, with user-specific interleavers and puncturing, that uses the noise model of
   every feature.
 - Evaluation programs that enroll whole databases in parallel and report the authentication decision of every comparison.
+- A Rust binding of the unimodal extractor that keeps templates in memory.
 
 ## Contents
 
@@ -21,6 +22,7 @@ Strengthened Fuzzy Extractor.
 - [Technical description](#technical-description)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Rust binding](#rust-binding)
 - [Documentation](#documentation)
 - [Security notice](#security-notice)
 - [License](#license)
@@ -37,6 +39,8 @@ Strengthened Fuzzy Extractor.
 | `libraries/MHSTCFE` | Multimodal extractor (`MultimodalHybridStrengthenedTurboCodeFuzzyExtractor`). |
 | `applications/HybridTurboCodeStrengthenedFuzzyExtractor` | Unimodal enrollment and evaluation program. |
 | `applications/MultimodalHybridStrengthenedTurboCodeFuzzyExtractor` | Multimodal enrollment and evaluation program (chimeric subjects). |
+| `rust-binding`, `Cargo.toml`, `build.rs` | Rust binding (crate `sfe`) of the unimodal extractor, and its `minimal` example. |
+| `flake.nix`, `flake.lock` | Optional Nix development shell. |
 | `tests` | End-to-end test of both programs on synthetic data. |
 | `cmake` | CMake helpers shared by all modules. |
 | `scripts/install.sh` | Builds, tests and installs everything in Release and Debug. |
@@ -180,6 +184,35 @@ MultimodalHybridStrengthenedTurboCodeFuzzyExtractor -c multimodalConfig.txt -m b
 `recovered/authenticationResults.txt` contains one line `PROBE_ID TEMPLATE_ID AUTHENTICATED GENUINE` per comparison. The
 formats of every input and output file are described in the *File formats* page of the manual, and `tests/end_to_end.py` is a
 complete working example on synthetic data.
+
+## Rust binding
+
+The Cargo package `sfe` at the root of the repository exposes the unimodal extractor to Rust through
+[cxx](https://cxx.rs). `build.rs` builds the needed C++ libraries with CMake, so they do not have to be installed first.
+It needs Rust ≥ 1.85, CMake and Armadillo (`nix develop` provides them with the included flake).
+
+```rust
+use sfe::HSTCFE;
+use std::path::Path;
+
+let mut general = HSTCFE::new();
+general.load_general_data(Path::new("generalConfigFile.txt"));
+general.set_user_id("subject_0002");
+general.generate(sfe::turbocodes::parse_samples_file(Path::new("enrollment/subject_0002.txt")));
+let template: Vec<u8> = general.get_user_specific_data();          // helper data, kept in memory
+
+let probes = sfe::turbocodes::parse_samples_file(Path::new("probe/subject_0002.txt"));
+let mut user = HSTCFE::load_user_specific_extractor(&general, template);
+let accepted = user.reproduce(probes[0].clone()) == user.turbocode_input_message();
+```
+
+`cargo run --bin minimal` runs this example (it expects `generalConfigFile.txt` in the current folder and the samples in
+`../fingerVeinData_196/testSet/{enrollment,probe}/subject_0002.txt`, relative to the repository). The template is the text
+of a `.userSpecificHSTCFE` file, produced and read in C++ by `getUserSpecificData` and `loadUserSpecificDataFromBlob`.
+
+Current limitations: `build.rs` expects the libraries in `lib64` (Fedora-like systems; on Debian/Ubuntu the link fails) and
+links the `_Debug` libraries (so `cargo build --release` fails), and C++ exceptions abort the process instead of becoming Rust
+errors. See the *Rust binding* page of the manual for details.
 
 ## Documentation
 
