@@ -252,6 +252,11 @@ void TurboCode::setPuncturingPatterns(const binary_polynomial_vector &newPunctur
     m_puncturingPatterns = newPuncturingPattern;
     m_inputLength = L;
     updateOutputAndRedundancyLengths();
+    // The positions of the redundancy bits in the codeword depend on the puncturing patterns: they must be rebuilt
+    // whenever the patterns change, not only when the interleavers are set. Otherwise an object punctured after
+    // setInterleavers() (as HybridStrengthenedTurboCodeFuzzyExtractor::generate() does) decodes with stale indexes,
+    // reading wrong redundancy bits and past the end of m_symbolPdfEvaluations.
+    buildRedundancyIndexes();
 }
 
 const uint_uint_pair TurboCode::inputOutputLengths() const

@@ -33,6 +33,13 @@ add_subdirectory(applications/MultimodalHybridStrengthenedTurboCodeFuzzyExtracto
 
 # End-to-end test of both programs on synthetic data (Release and Debug builds).
 if (SFE_BUILD_TESTS)
+    # Same results from the enrolling HSTCFE object and from its reloaded template (in-memory API, Rust binding).
+    add_executable(test_inmemory_reproduce tests/test_inmemory_reproduce.cpp)
+    target_link_libraries(test_inmemory_reproduce PRIVATE HSTCFE)
+    add_test(NAME inmemory_reproduce
+             COMMAND test_inmemory_reproduce ${CMAKE_CURRENT_BINARY_DIR}/inmemory_reproduce
+                     ${CMAKE_CURRENT_SOURCE_DIR}/libraries/TurboCodes/configFiles/best-found-turbo-code_rate_1_3.txt)
+
     find_program(SFE_PYTHON3 NAMES python3)
     if (SFE_PYTHON3)
         add_test(NAME end_to_end

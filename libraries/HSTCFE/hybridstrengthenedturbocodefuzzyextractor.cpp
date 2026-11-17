@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <sstream>
 
 std::uniform_int_distribution<int> HybridStrengthenedTurboCodeFuzzyExtractor::m_uniform_binary_distribution = std::uniform_int_distribution<int>(0,1);
 std::mt19937 HybridStrengthenedTurboCodeFuzzyExtractor::m_twister = std::mt19937(RAND_SEED);
@@ -1187,6 +1189,8 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::readUserSpecificData(std::istrea
 
 void HybridStrengthenedTurboCodeFuzzyExtractor::writeUserSpecificData(std::ostream &file)
 {
+    // Enough digits for every real_number to be read back exactly, so that a loaded template behaves as the enrolled one.
+    const std::streamsize previousPrecision = file.precision(std::numeric_limits<real_number>::max_digits10);
     file << "UserId " << m_userId << std::endl;
     file << "InputDimensionality " << m_inputDimensionality << std::endl;
     file << "CodeOffsetStdDevOffset " << m_codeOffsetStdDevOffset << std::endl;
@@ -1370,6 +1374,7 @@ void HybridStrengthenedTurboCodeFuzzyExtractor::writeUserSpecificData(std::ostre
     } else {
         file << "false" << std::endl;
     }
+    file.precision(previousPrecision);
 }
 
 void HybridStrengthenedTurboCodeFuzzyExtractor::saveUserSpecificData(const std::string &fileName)

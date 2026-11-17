@@ -62,7 +62,7 @@ public:
   /// @return One binary vector of length \f$N_I\f$ per generator.
   const binary_polynomial_vector &puncturingPatterns() const;
   /// Setter of the puncturing patterns \ref m_puncturingPatterns. The length of the patterns sets the input length \f$N_I\f$, and
-  /// the output length and redundancy lengths are updated accordingly.
+  /// the output length, redundancy lengths and redundancy indexes (\ref m_redundancyIndexes) are updated accordingly.
   /// @param[in] newPuncturingPattern One binary vector per generator, all of the same length.
   void setPuncturingPatterns(const binary_polynomial_vector &newPuncturingPattern);
   /// Getter of the interleavers \ref m_interleavers
