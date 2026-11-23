@@ -195,24 +195,23 @@ It needs Rust ≥ 1.85, CMake and Armadillo (`nix develop` provides them with th
 use sfe::HSTCFE;
 use std::path::Path;
 
-let mut general = HSTCFE::new();
-general.load_general_data(Path::new("generalConfigFile.txt"));
-general.set_user_id("subject_0002");
-general.generate(sfe::turbocodes::parse_samples_file(Path::new("enrollment/subject_0002.txt")));
-let template: Vec<u8> = general.get_user_specific_data();          // helper data, kept in memory
+let general = GeneralHSTCFE::from_config_file("generalConfigFile.txt")?;
 
-let probes = sfe::turbocodes::parse_samples_file(Path::new("probe/subject_0002.txt"));
-let mut user = HSTCFE::load_user_specific_extractor(&general, template);
-let accepted = user.reproduce(probes[0].clone()) == user.turbocode_input_message();
+let enrollment = sfe::turbocodes::parse_samples_file("enrollment/subject_0002.txt")?;
+let (mut user, key_gen, _upd) = general.enroll("subject_0002", &enrollment)?;
+
+let probes = sfe::turbocodes::parse_samples_file("probe/subject_0002.txt")?;
+let Some(key_rep) = user.reproduce(&probes[0]) else {
+    return Err("Key was not reproduced correctly".into());
+};
+
+let accepted = key_gen == key_rep;
+
 ```
 
 `cargo run --bin minimal` runs this example (it expects `generalConfigFile.txt` in the current folder and the samples in
-`../fingerVeinData_196/testSet/{enrollment,probe}/subject_0002.txt`, relative to the repository). The template is the text
-of a `.userSpecificHSTCFE` file, produced and read in C++ by `getUserSpecificData` and `loadUserSpecificDataFromBlob`.
+`./{enrollment,probe}/subject_0002.txt`, relative to the repository). 
 
-Current limitations: `build.rs` expects the libraries in `lib64` (Fedora-like systems; on Debian/Ubuntu the link fails) and
-links the `_Debug` libraries (so `cargo build --release` fails), and C++ exceptions abort the process instead of becoming Rust
-errors. See the *Rust binding* page of the manual for details.
 
 ## Documentation
 

@@ -16,7 +16,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
             .join("fingerVeinData_196")
             .join("testSet");
 
-    let enrollment_path = samples_path.join("ienrollment/subject_0002.txt");
+    let enrollment_path = samples_path.join("enrollment/subject_0002.txt");
     let enrollment = sfe::turbocodes::parse_samples_file(&enrollment_path)?;
     let (mut user, key_gen, _upd) = general.enroll("subject_0002", &enrollment)?;
 
