@@ -4,43 +4,52 @@
 //! Run with `cargo run --bin minimal`. Expects `generalConfigFile.txt` in the current folder and the samples files
 //! `../fingerVeinData_196/testSet/{enrollment,probe}/subject_0002.txt`, relative to the repository folder.
 
-use sfe::HSTCFE;
+use sfe::GeneralHSTCFE;
 use std::path::PathBuf;
 
-pub fn main() {
-    let mut general = HSTCFE::new();
-    let config_path = PathBuf::from("generalConfigFile.txt");
-    general.load_general_data(&config_path);
+pub fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let general = GeneralHSTCFE::from_config_file("generalConfigFile.txt")?;
 
-
-    let save_dir = PathBuf::from(".");
     let samples_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("..")
             .join("fingerVeinData_196")
             .join("testSet");
 
     let enrollment_path = samples_path.join("enrollment/subject_0002.txt");
-    let enrollment = sfe::turbocodes::parse_samples_file(&enrollment_path);
+    let enrollment = sfe::turbocodes::parse_samples_file(&enrollment_path)?;
+    let (_, key_gen, upd) = general.enroll("subject_0002", &enrollment)?;
 
     let probe_path = samples_path.join("probe/subject_0002.txt");
-    let probes = sfe::turbocodes::parse_samples_file(&probe_path);
+    let probes = sfe::turbocodes::parse_samples_file(&probe_path)?;
 
-    general.set_user_id("subject_0002");
-    general.generate(enrollment);
-    let key_gen = general.turbocode_input_message();
-
-    let user_specific_data = general.get_user_specific_data();
-
-    let mut user = HSTCFE::load_user_specific_extractor(&general, user_specific_data);
-    let key_gen_loaded = user.turbocode_input_message();
-
-    if !general.valid_for_reproduce() { 
-        println!("Not Valid");
-        return;
-    }
-
-    let key_rep = user.reproduce(probes[0].clone());
+    let mut user = GeneralHSTCFE::load_user_specific_extractor(&general, upd);
+    let Some(key_rep) = user.reproduce(&probes[0]) else {
+        return Err("Key was not reproduced correctly".into());
+    };
 
     println!("{:#}", key_gen == key_rep);
+    Ok(())
+}
+
+pub fn minimal() -> Result<(), Box<dyn std::error::Error>> {
+    let general = GeneralHSTCFE::from_config_file("generalConfigFile.txt")?;
+
+    let samples_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("fingerVeinData_196")
+            .join("testSet");
+
+    let enrollment_path = samples_path.join("ienrollment/subject_0002.txt");
+    let enrollment = sfe::turbocodes::parse_samples_file(&enrollment_path)?;
+    let (mut user, key_gen, _upd) = general.enroll("subject_0002", &enrollment)?;
+
+    let probe_path = samples_path.join("probe/subject_0002.txt");
+    let probes = sfe::turbocodes::parse_samples_file(&probe_path)?;
+    let Some(key_rep) = user.reproduce(&probes[0]) else {
+        return Err("Key was not reproduced correctly".into());
+    };
+
+    println!("{:#}", key_gen == key_rep);
+    Ok(())
 }
 

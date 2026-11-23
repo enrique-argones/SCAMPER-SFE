@@ -21,7 +21,7 @@
                         gdb
                 ];
 
-                LD_LIBRARY_PATH="../chmm/build:./TurboCodes/build:./HSTCFE/build:$LD_LIBRARY_PATH";
+                    #LD_LIBRARY_PATH="../chmm/build:./TurboCodes/build:./HSTCFE/build:$LD_LIBRARY_PATH";
 
                 shellHook = ''
                     build_HTCSFE(){
