@@ -3,12 +3,13 @@
 #
 # Usage (from any folder):  sh doc/build_docs.sh [--pdf] [--keep]
 #   --pdf   also build the PDF manuals with latexmk (refman.pdf in every latex folder); the complete manual is copied to
-#           doc/SCAMPER_SFE_Manual.pdf
+#           doc/SCAMPER_SFE_Manual.pdf and the standalone integrators guide to doc/SCAMPER_SFE_Integrators_Guide.pdf
 #   --keep  do not delete the previous output before building
 #
-# The per-module manuals are linked to each other through tag files, so they are built in dependency order, and the
-# complete manual (doc/Doxyfile) is built last. The script stops with an error if Doxygen writes anything to a
-# doxygen_warnings.log, or if a LaTeX, BibTeX or latexmk run reports an error or a warning.
+# The per-module manuals are linked to each other through tag files, so they are built in dependency order. The
+# complete manual (doc/Doxyfile) is built after them, followed by the standalone integrators guide
+# (doc/integrators/Doxyfile). The script stops with an error if Doxygen writes anything to a doxygen_warnings.log, or if a
+# LaTeX, BibTeX or latexmk run reports an error or a warning.
 set -e
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -72,10 +73,15 @@ build libraries/MHSTCFE doc
 build applications/HybridTurboCodeStrengthenedFuzzyExtractor doc
 build applications/MultimodalHybridStrengthenedTurboCodeFuzzyExtractor doc
 build doc .
+build doc/integrators .
 
 if [ "$PDF" = yes ] && [ -f "$ROOT/doc/latex/refman.pdf" ]; then
     cp "$ROOT/doc/latex/refman.pdf" "$ROOT/doc/SCAMPER_SFE_Manual.pdf"
     echo "Complete manual: doc/SCAMPER_SFE_Manual.pdf"
+fi
+if [ "$PDF" = yes ] && [ -f "$ROOT/doc/integrators/latex/refman.pdf" ]; then
+    cp "$ROOT/doc/integrators/latex/refman.pdf" "$ROOT/doc/SCAMPER_SFE_Integrators_Guide.pdf"
+    echo "Guide for cryptographic integrators: doc/SCAMPER_SFE_Integrators_Guide.pdf"
 fi
 
 if [ -n "$FAILED" ]; then

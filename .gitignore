@@ -9,6 +9,9 @@ CMakeFiles/
 doc/html/
 doc/latex/
 doc/SCAMPER_SFE_Manual.pdf
+doc/SCAMPER_SFE_Integrators_Guide.pdf
+doc/integrators/html/
+doc/integrators/latex/
 libraries/*/doc/
 applications/*/doc/
 doxygen_warnings.log
