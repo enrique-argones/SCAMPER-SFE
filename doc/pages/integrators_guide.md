@@ -4,9 +4,10 @@ Guide for cryptographic integrators {#integrators_guide_page}
 [TOC]
 
 This page is for the engineers who use SCAMPER SFE as a cryptographic building block, for example to unlock or derive the
-holder key of a self-sovereign identity wallet from a biometric sample. It describes the contract of the Rust API exposed by
-the crate \c sfe (\ref rust_binding_page), which is the API of the minimal example \c rust-binding/main.rs, how to turn its
-output into key material, and what is still missing before the extractor can protect real keys.
+holder key of a self-sovereign identity wallet from a biometric sample. It describes the contract of the Rust API of the crate
+\c sfe 0.2 (types \c GeneralHSTCFE, \c UserHSTCFE, \c Key, \c UserPublicData and \c ApiError), how to turn its output into key
+material, and what is still missing before the extractor can protect real keys. The reasons for the shape of this API, compared
+with the C++ class, are explained in \c doc/api_changes.md; the build of the crate is described in \ref rust_binding_page.
 
 \warning SCAMPER SFE 1.0.0 is a research implementation (\ref td_security). The section \ref ig_gaps lists the issues that
 **block a deployment**. Several of them, in particular the fixed-seed random generator and the key stored in the helper data,
@@ -25,72 +26,82 @@ training set whose empirical CDFs uncouple the features.
 - \f$\mathrm{Rep}(\mathbf{x}', P; \Pi) \to \mathbf{b}^\prime\f$ takes one probe sample and returns a candidate key, equal to \f$\mathbf{b}\f$ when the probe
   is close enough to the enrollment samples.
 
-Rep has **no failure output**. It always returns \f$N_I\f$ bits, whether the probe is genuine or not. Deciding whether
-\f$\mathbf{b}^\prime = \mathbf{b}\f$ is the job of the integrator (\ref ig_verify).
+Rep has **no failure output**. It always returns \f$N_I\f$ bits, whether the probe is genuine or not: in \c sfe 0.2,
+\c UserHSTCFE::reproduce returns an \c Option, but it is always \c Some. Deciding whether \f$\mathbf{b}^\prime = \mathbf{b}\f$ is the job of
+the integrator (\ref ig_verify).
 
 The three objects have different roles:
 
-| Object | API | Confidentiality | Integrity | Lifetime |
-|--------|-----|-----------------|-----------|----------|
-| Public parameters \f$\Pi\f$ | \c load_general_data | Public | Must be authentic and identical at Gen and Rep | System version |
-| Helper data \f$P\f$ | \c get_user_specific_data | Public in the SFE model only once protected by the second factor; <b>currently contains the key</b> | Must be authentic | One enrollment |
-| Key \f$\mathbf{b}\f$ | \c turbocode_input_message, \c reproduce | Secret | — | Transient |
+| Object | Rust type | Confidentiality | Integrity | Lifetime |
+|--------|-----------|-----------------|-----------|----------|
+| Public parameters \f$\Pi\f$ | \c GeneralHSTCFE | Public | Must be authentic and identical at Gen and Rep | System version |
+| Helper data \f$P\f$ | \c UserPublicData | Public in the SFE model only once protected by the second factor; <b>currently contains the key</b>, despite the name of the type | Must be authentic | One enrollment |
+| Key \f$\mathbf{b}\f$ | \c Key | Secret | — | Transient |
 
 API contract {#ig_api}
 ============
 
-All the functions belong to \c sfe::HSTCFE, except \c sfe::turbocodes::parse_samples_file.
+The types are exported at the root of the crate, except \c sfe::turbocodes::parse_samples_file and \c sfe::errors::ApiError.
+"Abort" means that a C++ exception crosses the bridge without being converted into an \c ApiError, which terminates the
+process.
 
-| Rust call | Precondition | Effect and result | On error |
-|-----------|--------------|-------------------|----------|
-| \c HSTCFE::new() | — | Empty extractor | — |
-| \c load_general_data | Argument: \c &Path | Reads \f$\Pi\f$: parses the Turbo Code file and reads the whole training-set folder to build the normalizers. The most expensive call: do it once per process. | Missing or malformed file: **process abort**. Non-UTF-8 path: panic. |
-| \c set_user_id(&str) | — | Identifier written in \f$P\f$ (label \c UserId). | — |
-| \c generate | Argument: one \c Vec<f64> per sample. \f$\Pi\f$ loaded. Every sample has the training-set dimensionality \f$D\f$. | Gen: draws \f$\mathbf{b}\f$, builds \f$P\f$ inside the object. Overwrites any previous enrollment held by the object. | Inconsistent input: **process abort**. |
-| \c valid_for_reproduce() | After \c generate or a load | \c false when the template has no capacity (\f$C = 0\f$): there is no key, the enrollment must be rejected. | — |
-| \c get_user_specific_data() | After \c generate | \f$P\f$ as ASCII text (see the data types below). Includes \f$\mathbf{b}\f$ (\ref ig_gap_key). | — |
-| \c turbocode_input_message() | After \c generate or a load | \f$\mathbf{b}\f$ as stored in the object. Use it <b>only right after</b> \c generate, to bind \f$\mathbf{b}\f$ to the application key. | — |
-| \c HSTCFE::load_user_specific_extractor | Arguments: a general extractor holding \f$\Pi\f$ and \f$P\f$ as \c Vec<u8> | New extractor: copy of the general extractor (cheap: the normalizers are shared) with \f$P\f$ loaded. | Malformed \f$P\f$: **process abort**. |
-| \c reproduce | Argument: one \c Vec<f64>. Loaded extractor with \c valid_for_reproduce() | Rep: soft Turbo decoding of one probe; returns \f$\mathbf{b}^\prime\f$, \f$N_I\f$ bits. | Inconsistent \f$P\f$: **process abort**. |
-| \c raw() | — | Reference to the C++ object, for diagnostics. | — |
-| \c turbocodes::parse_samples_file | Argument: \c &Path | Samples of a file in the format of \ref ff_samples, one \c Vec<f64> per sample. | Missing or malformed file: **process abort**. |
+| Rust call | Arguments and preconditions | Effect and result | On error |
+|-----------|-----------------------------|-------------------|----------|
+| \c GeneralHSTCFE::from_config_file | Path of the general configuration file. | Reads \f$\Pi\f$: parses the Turbo Code file and reads the whole training-set folder to build the normalizers. The most expensive call: do it once per thread (\ref ig_operations). | \c Err(FailedToLoadGeneralConfig): missing or malformed file, non-UTF-8 path. |
+| \c GeneralHSTCFE::clone | — | Copy of the general extractor. Cheap: the normalizers are shared. | — |
+| \c GeneralHSTCFE::enroll | User identifier, enrollment samples (one \c [f64] slice each, of dimensionality \f$D\f$). | Gen on a copy of the general extractor, which is not modified. Returns the enrolled \c UserHSTCFE, the \c Key and the \c UserPublicData. | \c Err(InvalidExtractor) if the template has no capacity (\f$C = 0\f$): reject the enrollment. Wrong dimensionality: <b>abort</b>. |
+| \c GeneralHSTCFE::load_user_specific_extractor | General extractor, \c UserPublicData. | New \c UserHSTCFE: copy of the general extractor with \f$P\f$ loaded. | Malformed \f$P\f$: <b>abort</b>. |
+| \c UserHSTCFE::reproduce | One probe sample of dimensionality \f$D\f$. | Rep: soft Turbo decoding; returns \c Some(Key), \f$N_I\f$ bits, whatever the probe. | Wrong dimensionality: <b>abort</b>. |
+| \c UserHSTCFE::get_key | — | \f$\mathbf{b}\f$ as stored in the object, that is, read from \f$P\f$. **Never use it in a deployed flow.** | — |
+| \c UserHSTCFE::get_user_specific_data | — | \f$P\f$ of the object, as \c UserPublicData. | — |
+| \c UserHSTCFE::raw, \c GeneralHSTCFE::raw | \c GeneralHSTCFE::raw needs the feature \c sys. | Reference to the C++ object, for diagnostics. | — |
+| \c Key::as_bits, \c Key::len | — | Copy of the bits as \c Vec<bool>; \f$N_I\f$. | — |
+| \c UserPublicData::from_bytes, \c as_bytes, \c into_bytes | — | Conversion from and to bytes, without any check: \f$P\f$ is only parsed by \c load_user_specific_extractor. | — |
+| \c UserPublicData::save, \c load | Path. | Writes or reads the bytes of \f$P\f$ to or from a file (the \c .userSpecificHSTCFE format). | \c Err(IOError). |
+| \c turbocodes::parse_samples_file | Path. | Samples of a file in the format of \ref ff_samples, one \c Vec<f64> per sample. | \c Err(FailedToParseSamplesFile). |
+
+The feature \c sys exposes the raw cxx bridge as \c sfe::sys, without stability guarantees. An integration should not need it.
 
 Data types and sizes:
 
-- **Samples.** \c Vec<f64> of length \f$D\f$, the dimensionality of the training set. The C++ code stores them as 32-bit
-  \c float. The values must be finite: the shim does not check them.
-- **Enrollment.** Several samples per subject. The intra-subject standard deviation of every feature is estimated from them;
-  with a single sample, or with identical samples, it is zero (see \ref ig_gap_sigma).
-- **Key.** \c Vec<bool>, index \f$i\f$ is bit \f$i\f$ of the Turbo Code input message. Its length
+- **Samples.** \c f64 slices of length \f$D\f$, the dimensionality of the training set. The C++ code stores them as 32-bit
+  \c float. The binding does not check the length (a wrong one aborts the process) nor that the values are finite.
+- **Enrollment.** Several distinct samples per subject. The intra-subject standard deviation of every feature is estimated
+  from them; with a single sample, or with identical samples, it is zero (\ref ig_gap_sigma). \c enroll accepts a single
+  sample, and the template then gets the largest possible capacity, which is not a sign of a stronger key.
+- **Key.** \c Key holds the bits of the Turbo Code input message; index \f$i\f$ of \c as_bits() is bit \f$i\f$. Its length
   \f$N_I = \lceil C\,k/n \rceil\f$ depends on the capacity \f$C\f$ of the template and on the code rate \f$k/n\f$ of
   \f$\Pi\f$ (1/3 to 1/6). It differs between subjects and between two enrollments of the same subject. \f$N_I\f$ is stored
-  in \f$P\f$ and is therefore public.
-- **Helper data.** \c Vec<u8> holding the text of a \c .userSpecificHSTCFE file (\ref ff_userspecific). The values are separated by whitespace, so
-  the user identifier must not contain whitespace. \f$P\f$ can only be loaded by an extractor holding the same \f$\Pi\f$: a
-  different \f$\Pi\f$ is not detected and makes Rep return wrong keys.
+  in \f$P\f$ and is therefore public. \c Key implements \c PartialEq with an ordinary, not constant-time, comparison, and has
+  no \c Debug implementation.
+- **Helper data.** \c UserPublicData holds the text of a \c .userSpecificHSTCFE file. The values are
+  separated by whitespace, so the user identifier must not contain whitespace. \f$P\f$ can only be loaded by an extractor
+  holding the same \f$\Pi\f$: a different \f$\Pi\f$ is not detected and makes Rep return wrong keys.
 
 Integration pattern {#ig_flow}
 ===================
 
 Enrollment:
 
-1. Load \f$\Pi\f$ once per process into a *general* extractor, and compute a digest of \f$\Pi\f$ (configuration file, Turbo Code
-   file and training-set files) to identify the parameter version.
-2. Capture several samples, call \c set_user_id with an opaque identifier (random, not a name or a DID: it is stored in
-   \f$P\f$), then \c generate. If \c valid_for_reproduce() is \c false, reject the enrollment.
-3. Read \f$\mathbf{b}\f$ with \c turbocode_input_message() and derive the application key from it (\ref ig_kdf). Register the
-   public part of the derived key (\ref ig_verify).
-4. Store \f$P\f$, the KDF salt and the digest of \f$\Pi\f$ together, protected as in \ref ig_gaps.
-5. Erase \f$\mathbf{b}\f$, the derived secret, the enrollment samples and the enrolling object as soon as possible.
+1. Load \f$\Pi\f$ with \c GeneralHSTCFE::from_config_file, and compute a digest of \f$\Pi\f$ (configuration file, Turbo Code
+   file and training-set files) that identifies the parameter version.
+2. Capture several samples and call \c enroll with an opaque identifier (random, not a name or a DID: it is stored in
+   \f$P\f$). An \c Err means that the enrollment must be rejected and the samples captured again.
+3. Derive the application key from the returned \c Key (\ref ig_kdf) and register the public part of the derived key
+   (\ref ig_verify). Drop the returned \c UserHSTCFE: it holds \f$\mathbf{b}\f$.
+4. Store the bytes of \c UserPublicData, the KDF salt and the digest of \f$\Pi\f$ together, protected as in \ref ig_gaps.
+   \c UserPublicData::save writes the bytes alone, with the default file permissions of the process.
+5. Erase \f$\mathbf{b}\f$, the derived secret and the enrollment samples as soon as possible.
 
 Reproduction:
 
-1. Check that the stored digest equals the digest of the loaded \f$\Pi\f$.
-2. Build the extractor with \c HSTCFE::load_user_specific_extractor(&general, P) and call \c reproduce(probe).
-3. Derive the application key from \f$\mathbf{b}^\prime\f$ with the stored salt and accept only if it matches the registered public
-   key.
-4. **Never** call \c turbocode_input_message() on an extractor built from \f$P\f$ in a deployed flow: it returns the key read from
-   \f$P\f$, which is how the minimal example checks its result, and it bypasses the biometric entirely.
+1. Check the authenticity of the stored record and that its digest equals the digest of the loaded \f$\Pi\f$.
+2. Build the extractor with \c GeneralHSTCFE::load_user_specific_extractor and call \c reproduce(probe).
+3. Derive the application key from the candidate with the stored salt, and accept only if it matches the registered public
+   key. Do not take \c Some as a success.
+4. **Never** call \c UserHSTCFE::get_key, and never compare the candidate with the key enrolled by the same process, in a
+   deployed flow. \c get_key returns the key read from \f$P\f$, and the comparison with the enrolled key is how the minimal
+   example and the test \c tests/rust-interoperability.rs check their results: both bypass the biometric.
 
 Key derivation {#ig_kdf}
 ==============
@@ -99,7 +110,7 @@ Do not use \f$\mathbf{b}\f$ directly as a key. Its length varies, it is a bit ve
 strength is bounded by the biometric (\ref ig_verify), not by \f$N_I\f$. Encode it canonically and feed it to a KDF such as
 HKDF \cite rfc5869, with a random salt stored next to \f$P\f$ and a context string that binds the use and the version of
 \f$\Pi\f$. The encoding below (4-byte big-endian \f$N_I\f$, then the bits most-significant first, zero-padded) is a
-recommendation of this guide, not part of the crate: whichever encoding is chosen must be fixed for the lifetime of the
+recommendation of this guide, not part of the crate: whichever encoding is chosen must stay fixed for the lifetime of the
 templates.
 
 \code{.unparsed}
@@ -142,7 +153,8 @@ fn bind(sfe_key: &[bool], params: &[u8; 32]) -> ([u8; 32], VerifyingKey) {
 }
 
 /// Reproduction: the signing key if the candidate SFE key matches the registered public key.
-fn unlock(candidate: &[bool], params: &[u8; 32], salt: &[u8; 32], registered: &VerifyingKey) -> Option<SigningKey> {
+fn unlock(candidate: &[bool], params: &[u8; 32], salt: &[u8; 32],
+          registered: &VerifyingKey) -> Option<SigningKey> {
     let sk = derive_signing_key(candidate, params, salt);
     (sk.verifying_key() == *registered).then_some(sk)
 }
@@ -151,18 +163,32 @@ fn unlock(candidate: &[bool], params: &[u8; 32], salt: &[u8; 32], registered: &V
 The calls of the extractor around it:
 
 \code{.unparsed}
-// Enrollment
-general.set_user_id(&opaque_id);
-general.generate(enrollment_samples);
-if !general.valid_for_reproduce() { /* reject, capture again */ }
-let (salt, vk) = bind(&general.turbocode_input_message(), &params);
-let helper_data = general.get_user_specific_data();       // store with salt and params; register vk
+use sfe::{GeneralHSTCFE, UserPublicData};
 
-// Reproduction
-let mut user = HSTCFE::load_user_specific_extractor(&general, helper_data);
-let candidate = user.reproduce(probe);
-match unlock(&candidate, &params, &salt, &vk) { Some(sk) => { /* sign */ }, None => { /* reject */ } }
+let general = GeneralHSTCFE::from_config_file("generalConfigFile.txt")?;
+
+// Enrollment
+// Err: reject the enrollment and capture again
+let (user, key, helper_data) = general.enroll(&opaque_id, &enrollment_samples)?;
+drop(user);                                   // holds the key
+let bits = Zeroizing::new(key.as_bits());
+let (salt, vk) = bind(&bits, &params);
+let record = helper_data.into_bytes();
+// store record, salt and params as one authenticated record; register vk
+
+// Reproduction (record authenticated and params checked beforehand)
+let helper_data = UserPublicData::from_bytes(record);
+let mut user = GeneralHSTCFE::load_user_specific_extractor(&general, helper_data);
+// always Some in sfe 0.2: Some is not a success
+let Some(candidate) = user.reproduce(&probe) else { return Err("rejected".into()) };
+match unlock(&Zeroizing::new(candidate.as_bits()), &params, &salt, &vk) {
+    Some(sk) => { /* sign with sk */ }
+    None => { /* reject */ }
+}
 \endcode
+
+This flow was checked against \c sfe 0.2 on synthetic data: 30 subjects with 24 features, keys of 14 to 19 bits, 8 of 10
+genuine probes accepted and none of 290 impostor probes.
 
 The salt separates the keys derived from different enrollments, but it does not add entropy: if \f$\mathbf{b}\f$ is predictable
 (\ref ig_gap_rng), so is the derived key.
@@ -172,8 +198,7 @@ Verification and strength {#ig_verify}
 
 Rep cannot tell whether it succeeded, so the integrator needs a verifier. The pattern above stores a public key derived from
 \f$\mathbf{b}\f$ and compares public keys, which needs no constant-time comparison. A hash of \f$\mathbf{b}\f$ stored with
-\f$P\f$ works the same way. A comparison with secret values (for example the stored key in the minimal example) must use a
-constant-time comparison.
+\f$P\f$ works the same way. A comparison with secret values, such as \c == between two \c Key values, is not constant-time.
 
 Any such verifier, together with \f$P\f$, is an **offline oracle**. An attacker holding both can run Rep on biometric samples of
 other people (or synthetic ones) and test each result locally.
@@ -186,7 +211,6 @@ other people (or synthetic ones) and test each result locally.
   them together, or verify online with rate limiting.
 - Without the second factor, the helper data of two enrollments of the same subject are linkable, and \f$P\f$ reveals which
   features of the subject are reliable.
-
 - **Integrity.** \f$P\f$ is not authenticated: a modified \f$P\f$ is either rejected by an abort or silently changes what Rep
   computes. Sign or MAC \f$P\f$, the salt and the parameter digest as one record at enrollment, and check them before calling
   \c load_user_specific_extractor.
@@ -194,37 +218,37 @@ other people (or synthetic ones) and test each result locally.
 Operational constraints {#ig_operations}
 =======================
 
-- **Threads.** \c HSTCFE is neither \c Send nor \c Sync (an opaque C++ type behind \c cxx::UniquePtr). Create the extractors in
-  the thread that uses them. \c reproduce modifies the decoder state of its object, so one object must not be shared between
-  concurrent calls. \c generate draws from a random generator shared by the whole process and protected by a mutex.
-- **No clone.** The binding has no way to copy a general extractor without loading \f$P\f$. Enrolling with the general object
-  itself (as the minimal example does) leaves \f$\mathbf{b}\f$ of the last enrolled subject inside it, and that state is copied
-  into every extractor built from it until it is overwritten.
-- **Errors.** None of the bridged functions returns a \c Result: every C++ exception aborts the process. Validate the inputs
-  (paths, dimensionality, finite values, number of enrollment samples) before the call, and treat \f$P\f$ that has not been
-  authenticated as untrusted input that can crash the process.
+- **Threads.** The extractor types are neither \c Send nor \c Sync (opaque C++ types behind \c cxx::UniquePtr): a clone cannot
+  be moved to another thread, so each thread must call \c from_config_file itself. \c reproduce modifies the decoder state of
+  its object, hence \c &mut \c self. \c enroll draws from a random generator shared by the whole process and protected by a
+  mutex.
+- **Errors.** Loading \f$\Pi\f$ and samples files returns \c Result. Malformed \f$P\f$ and samples of the wrong dimensionality
+  still abort the process. Validate the inputs before the calls, and treat \f$P\f$ that has not been authenticated as untrusted
+  input that can crash the process.
 - **Timing.** The Turbo decoder stops as soon as its component decoders agree, so a genuine probe usually takes fewer iterations
-  than an impostor probe. The running time of Rep therefore leaks whether the probe was close to the template.
-- **Memory hygiene.** Keys and helper data are returned in ordinary \c Vec, and the C++ objects keep \f$\mathbf{b}\f$ in memory;
-  nothing is zeroized. Wrap copies in \c zeroize::Zeroizing and drop the extractors as soon as possible.
-- **Console output.** \c build.rs links the Debug libraries, which are compiled with \c DEBUG defined. In that configuration the
-  libraries print to standard output, among others, the PSK symbols committed at enrollment (which encode codeword bits), the
-  normalized biometric values and the decoder state. Never run a Debug build on real biometric data, and do not collect its
-  standard output.
+  than an impostor probe. On the synthetic data above, Rep took 0.4 ms on average for genuine probes and 1.5 ms for impostor
+  probes: the running time leaks whether the probe was close to the template.
+- **Memory hygiene.** \c Key, \c UserPublicData and the C++ objects keep \f$\mathbf{b}\f$ in memory and are not zeroized on drop;
+  \c Key::as_bits returns a new copy each time. Wrap the copies in \c zeroize::Zeroizing and drop the extractors as soon as
+  possible.
+- **Console output.** The build script of \c sfe 0.2 builds and links the Release libraries, which print only progress messages
+  and the paths of the training-set files while \f$\Pi\f$ is loaded. Never link the Debug libraries (compiled with \c DEBUG):
+  they print the PSK symbols committed at enrollment (which encode codeword bits), the normalized biometric values and the
+  decoder state.
 
 Deployment blockers {#ig_gaps}
 ===================
 
-| Id | Issue | Consequence | Fix |
-|----|-------|-------------|-----|
-| G1 | Fixed-seed Mersenne Twister (\ref ig_gap_rng) | Keys, interleavers and permutations are predictable | Library |
-| G2 | Key stored in the helper data (\ref ig_gap_key) | Whoever reads \f$P\f$ gets \f$\mathbf{b}\f$ | Library |
-| G3 | Second factor not implemented (\ref ig_gap_factor) | Offline oracle, linkable templates | Library and integrator |
-| G4 | Exceptions abort the process | Denial of service from bad inputs or \f$P\f$ | Binding |
-| G5 | Debug build prints secrets | Leakage through logs | Binding (\c build.rs) |
-| G6 | Zero-variance features (\ref ig_gap_sigma) | Unstable decoding for some templates | Library |
-| G7 | No zeroization, no clone, no timing protection | Residual secrets, side channel | Binding and integrator |
-| G8 | \c build.rs portability (\ref rust_build) | Build fails on Debian/Ubuntu and in release mode | Binding |
+| Id | Issue | Consequence | Fix | Status in \c sfe 0.2 |
+|----|-------|-------------|-----|----------------------|
+| G1 | Fixed-seed Mersenne Twister | Keys, interleavers and permutations are predictable | Library | Open |
+| G2 | Key stored in the helper data | Whoever reads \f$P\f$ gets \f$\mathbf{b}\f$ | Library | Open |
+| G3 | Second factor not implemented | Offline oracle, linkable templates | Library and integrator | Open |
+| G4 | C++ exceptions abort the process | Denial of service from bad inputs or \f$P\f$ | Binding | Partly fixed: \f$\Pi\f$ and samples files return \c Result |
+| G5 | Debug build prints secrets | Leakage through logs | Binding | Fixed: Release libraries |
+| G6 | Zero-variance features | Unstable decoding for some templates | Library | Open |
+| G7 | No zeroization, timing side channel | Residual secrets, leakage of the decision | Binding and integrator | Open; the general extractor can now be cloned and is not modified by \c enroll |
+| G8 | Build script portability | Build fails where CMake installs to \c lib (Debian, Ubuntu); run path into the Cargo build folder | Binding | Partly fixed: library names; \c lib64 still hard-coded |
 
 Random generator (G1) {#ig_gap_rng}
 ---------------------
@@ -239,9 +263,9 @@ The library must draw these values from the operating system's cryptographic ran
 Key in the helper data (G2) {#ig_gap_key}
 ---------------------------
 
-\c get_user_specific_data writes \f$\mathbf{b}\f$ under the label \c TurboCodeInputMessage, and the parser requires that label.
-The library needs a serialization of \f$P\f$ without the key. Until then, \f$P\f$ must be handled as a secret, which defeats the
-purpose of a fuzzy extractor.
+The bytes of \c UserPublicData contain \f$\mathbf{b}\f$ under the label \c TurboCodeInputMessage, and the parser requires that
+label. The library needs a serialization of \f$P\f$ without the key. Until then, \f$P\f$ (including the files written by
+\c UserPublicData::save) must be handled as a secret, which defeats the purpose of a fuzzy extractor.
 
 Second factor (G3) {#ig_gap_factor}
 ------------------
@@ -249,7 +273,7 @@ Second factor (G3) {#ig_gap_factor}
 The Strengthened Fuzzy Extractor protects \f$P\f$ with a fixed second authentication factor \cite argonesrua2019efficient,
 which makes the protected templates of a subject unlinkable and renewable and prevents the offline attack of \ref ig_verify.
 The evaluations of this software correspond to a disclosed second factor \cite argonesrua2024strengthened. The protection of
-\f$P\f$ is not part of the library yet.
+\f$P\f$ is not part of the library yet (\c doc/api_changes.md lists the encryption of \c UserPublicData as a known limitation).
 
 Zero-variance features (G6) {#ig_gap_sigma}
 ---------------------------
@@ -262,11 +286,11 @@ training set that covers the range of the features. A variance floor in the libr
 Testing checklist {#ig_testing}
 =================
 
-- Enroll and reproduce in **different** extractors, built from the serialized \f$P\f$, as in production (the C++ test
-  \c inmemory_reproduce checks that the enrolling object, its copy and a reloaded \f$P\f$ decode identically).
+- Enroll and reproduce in **different** extractors, built from the serialized \f$P\f$, as in production. The Rust test
+  \c reproduces_key_from_stored_helper_data in \c tests/rust-interoperability.rs does this, and the C++ test
+  \c inmemory_reproduce checks that the enrolling object, its copy and a reloaded \f$P\f$ decode identically.
 - Measure the false rejection and false acceptance rates of the integrated flow on a held-out set, with the production
   \f$\Pi\f$; report the FAR as the strength of the binding.
-- Check the distribution of \f$N_I\f$ and the rate of \c valid_for_reproduce() \c == \c false enrollments on the target
-  population.
+- Check the distribution of \f$N_I\f$ and the rate of rejected enrollments on the target population.
 - Check that a changed \f$\Pi\f$ is detected through the parameter digest before Rep is called.
-- Build in release mode and check that nothing is printed to standard output.
+- Check that nothing but the progress messages of \c from_config_file is printed to standard output.
