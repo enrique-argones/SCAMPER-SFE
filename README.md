@@ -44,7 +44,7 @@ Strengthened Fuzzy Extractor.
 | `tests` | End-to-end test of both programs on synthetic data. |
 | `cmake` | CMake helpers shared by all modules. |
 | `scripts/install.sh` | Builds, tests and installs everything in Release and Debug. |
-| `doc` | Complete manual (`Doxyfile`, pages, bibliography), common Doxygen settings and `build_docs.sh`. |
+| `doc` | Complete manual (`Doxyfile`, pages, bibliography), standalone integrators guide (`integrators/Doxyfile`), common Doxygen settings and `build_docs.sh`. |
 
 Every module has its own `CMakeLists.txt`, its own `Doxyfile` and a `doxygen` folder with the detailed technical description
 of the module.
@@ -243,12 +243,14 @@ sh doc/build_docs.sh          # HTML (and LaTeX sources) of every manual
 sh doc/build_docs.sh --pdf    # also every PDF manual, built with latexmk
 ```
 
-The script builds the module manuals in dependency order (they are linked through tag files), then the complete manual, and
-stops with an error if Doxygen, LaTeX, BibTeX or latexmk report any warning. The results are:
+The script builds the module manuals in dependency order (they are linked through tag files), then the complete manual and
+the standalone guide for cryptographic integrators, and stops with an error if Doxygen, LaTeX, BibTeX or latexmk report any
+warning. The results are:
 
 | Manual | HTML | PDF |
 |--------|------|-----|
 | Complete manual | `doc/html/index.html` | `doc/latex/refman.pdf`, copied to `doc/SCAMPER_SFE_Manual.pdf` |
+| Guide for cryptographic integrators | `doc/integrators/html/index.html` | `doc/integrators/latex/refman.pdf`, copied to `doc/SCAMPER_SFE_Integrators_Guide.pdf` |
 | One module | `<module>/doc/html/index.html` | `<module>/doc/latex/refman.pdf` |
 
 A single manual can also be built by hand from the folder of its `Doxyfile`:

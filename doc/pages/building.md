@@ -104,6 +104,7 @@ The documentation is written in the Doxygen sources and in the Markdown pages of
 | Doxyfile | Output | Content |
 |----------|--------|---------|
 | \c doc/Doxyfile | \c doc/html, \c doc/latex | **Complete manual**: system pages, every library and program. |
+| \c doc/integrators/Doxyfile | \c doc/integrators/html, \c doc/integrators/latex | **Guide for cryptographic integrators** alone (\ref integrators_guide_page). |
 | \c libraries/GMMLite/Doxyfile | \c libraries/GMMLite/doc | GMMLite library. |
 | \c libraries/ThreadPool/Doxyfile | \c libraries/ThreadPool/doc | ThreadPool library. |
 | \c libraries/TurboCodes/Doxyfile | \c libraries/TurboCodes/doc | TurboCodes library. |
@@ -135,11 +136,16 @@ Generating the manuals {#build_docs_generate}
 ----------------------
 
 The per-module manuals are linked through tag files, so they must be built in dependency order. The script
-\c doc/build_docs.sh does it, builds the complete manual last, and fails if Doxygen, LaTeX, BibTeX or latexmk report any
-warning:
+\c doc/build_docs.sh does it, builds the complete manual and then the standalone integrators guide, and fails if Doxygen,
+LaTeX, BibTeX or latexmk report any warning:
 
     sh doc/build_docs.sh          # HTML and LaTeX sources of every manual
-    sh doc/build_docs.sh --pdf    # also the PDF manuals, with latexmk; complete manual in doc/SCAMPER_SFE_Manual.pdf
+    sh doc/build_docs.sh --pdf    # also the PDF manuals, with latexmk; complete manual in doc/SCAMPER_SFE_Manual.pdf,
+                                  # integrators guide in doc/SCAMPER_SFE_Integrators_Guide.pdf
+
+The standalone guide is built from the same page as the complete manual. The input filter \c doc/integrators/filter.sed
+turns its references to the other pages of the complete manual into plain text; a new reference of that kind needs a line in
+that file, or the standalone build fails with a Doxygen warning.
 
 To build one manual by hand, run Doxygen in the folder of its \c Doxyfile and latexmk in its \c latex output folder:
 

@@ -1,0 +1,15 @@
+# Standalone manual: Guide for cryptographic integrators, built from the same page as the complete manual
+# (doc/pages/integrators_guide.md). doc/build_docs.sh builds it after the complete manual and copies the PDF to
+# doc/SCAMPER_SFE_Integrators_Guide.pdf.
+@INCLUDE               = ../Doxyfile.common
+PROJECT_NAME           = "SCAMPER SFE: Guide for Cryptographic Integrators"
+PROJECT_NUMBER         = 1.0.0
+OUTPUT_DIRECTORY       = .
+INPUT                  = ../pages/integrators_guide.md
+USE_MDFILE_AS_MAINPAGE = ../pages/integrators_guide.md
+# Drops the page label and turns the references to the rest of the complete manual into plain text (see filter.sed).
+FILTER_PATTERNS        = "*.md=sed -f filter.sed"
+CITE_BIB_FILES         = ../bibliography.bib
+LATEX_EXTRA_STYLESHEET = ../doxygen_sfe.sty
+# No file and directory pages: the only input is the guide.
+EXTRACT_ALL            = NO
