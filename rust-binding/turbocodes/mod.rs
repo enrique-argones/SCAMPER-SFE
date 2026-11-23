@@ -23,11 +23,24 @@ pub mod ffi {
     }
 }
 
-/// Reads a samples file (header `N D`, then `N` lines of `D` values; see the "File formats" page of the manual) and
-/// returns one `Vec<f64>` per sample.
+/// Reads a samples file and returns one `Vec<f64>` per sample.
 ///
-/// # Panics
-/// If the path is not valid UTF-8. A C++ error (missing or malformed file) terminates the process.
+/// The file starts with a header line containing the number of samples `N` and the number of
+/// values per sample `D`, followed by `N` lines of `D` values each, separated by whitespace.
+///
+/// See the "File formats" page of the manual for details.
+///
+/// The result can be passed directly to [`GeneralHSTCFE::enroll`](crate::GeneralHSTCFE::enroll),
+/// and each of its elements to [`UserHSTCFE::reproduce`](crate::UserHSTCFE::reproduce).
+///
+/// # Errors
+///
+/// Returns [`ApiError::FailedToParseSamplesFile`] 
+///     - if the path is not valid UTF-8, 
+///     - if the file cannot be opened, or
+///     - if its contents do not match the format above.
+/// When the error comes from the C++ parser,
+/// the message includes the file path and the C++ error message.
 pub fn parse_samples_file(
     file_path: impl AsRef<Path>,
 ) -> Result<Vec<Vec<f64>>, ApiError> {
