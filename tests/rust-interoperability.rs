@@ -30,6 +30,9 @@ fn reproduces_key_from_stored_helper_data() -> Result<(), Box<dyn Error>> {
     let probe = probes.first().ok_or("probe file contains no samples")?;
 
     let (_, enrolled_key, helper_data) = general.enroll(SUBJECT, &enrollment)?;
+    //helper_data.save("subject_0002.userSpecificHSTCFE")?;
+
+    //let helper_data = UserPublicData::load("subject_0002.userSpecificHSTCFE")?;
     let mut user = GeneralHSTCFE::load_user_specific_extractor(&general, helper_data);
 
     let reproduced = user.reproduce(probe).ok_or("reproduce returned None")?;
