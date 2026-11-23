@@ -1,4 +1,5 @@
 use std::path::Path;
+use crate::errors::ApiError;
 
 /// Raw cxx bridge to the C++ samples reader.
 #[cxx::bridge]
@@ -18,7 +19,7 @@ pub mod ffi {
 
         fn parse_samples_file_wrapper(
             samples_file_name: &CxxString,
-        ) -> ParsedSamples;
+        ) -> Result<ParsedSamples>;
     }
 }
 
@@ -28,14 +29,26 @@ pub mod ffi {
 /// # Panics
 /// If the path is not valid UTF-8. A C++ error (missing or malformed file) terminates the process.
 pub fn parse_samples_file(
-    file_path: &Path,
-) -> Vec<Vec<f64>> {
-    let file_path = file_path
-        .to_str()
-        .expect("configuration path is not valid UTF-8");
+    file_path: impl AsRef<Path>,
+) -> Result<Vec<Vec<f64>>, ApiError> {
+    let file_path = match file_path.as_ref().to_str() {
+        Some(p) => p,
+        None => {
+            return Err(ApiError::FailedToParseSamplesFile(format!(
+                "couldnt parse config path",
+            )))
+        }
+    };
 
     cxx::let_cxx_string!(filename = file_path);
-    let parsed = ffi::parse_samples_file_wrapper(&filename);
+    let parsed = match ffi::parse_samples_file_wrapper(&filename) {
+        Ok(p) => p,
+        Err(e) => {
+            return Err(ApiError::FailedToParseSamplesFile(format!(
+                "file {} : {}", &file_path, e.what()
+            )))
+        }
+    };
 
     let mut pos = 0;
     let mut result = Vec::new();
@@ -48,7 +61,7 @@ pub fn parse_samples_file(
         pos += len;
     }
 
-    result
+    Ok(result)
 }
 
 

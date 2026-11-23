@@ -1,194 +1,174 @@
-//! Rust binding of the SCAMPER SFE unimodal extractor (`HybridStrengthenedTurboCodeFuzzyExtractor`, library HSTCFE).
-//!
-//! The C++ classes are reached through the [cxx](https://cxx.rs) bridge declared in [`ffi`] and the C++ adapters in
-//! `rust-binding/hstcfe/shim.cc`. [`HSTCFE`] is the safe wrapper to use: it loads the general configuration, enrolls a
-//! subject, returns the user-specific helper data as a byte buffer, rebuilds a user extractor from that buffer and
-//! reproduces the key from a probe sample. Keys are `Vec<bool>`, one element per bit.
-//!
-//! C++ exceptions thrown through the bridged functions terminate the process (none of them returns a cxx `Result`).
-//!
-//! **Research-only:** the helper data contains the secret key (label `TurboCodeInputMessage`); see the "Security notice"
-//! of the README.
-//!
-//! See the "Rust binding" page of the SCAMPER SFE manual (`doc/pages/rust_binding.md`) for build instructions.
-
-/// Reading of biometric samples files (wrapper of the C++ `parseSamplesFile`).
 pub mod turbocodes;
+
+mod hstcfe; 
+/// Raw access to the C++ bindings. Not covered by semver guarantees.
+#[cfg(feature = "sys")]
+pub mod sys {
+    pub use crate::hstcfe::ffi::*;
+    pub use crate::turbocodes::ffi::*;
+}
+
+pub mod errors;
+use errors::ApiError;
+
 use std::path::Path;
 use cxx::UniquePtr;
+use std::fs;
 
+type Raw = hstcfe::ffi::HybridStrengthenedTurboCodeFuzzyExtractor;
 
-/// Raw cxx bridge to the C++ extractor. Prefer the safe wrapper [`HSTCFE`].
-#[cxx::bridge]
-pub mod ffi {
-    unsafe extern "C++" {
-        include!("sfe/libraries/HSTCFE/hybridstrengthenedturbocodefuzzyextractor.h");
-        include!("sfe/libraries/TurboCodes/turbocode.h");
-        include!("sfe/libraries/TurboCodes/vectorfiles.h");
+#[derive(Eq, PartialEq)]
+pub struct Key {
+    inner: Vec<bool>,
+}
+impl Key {
+    pub fn as_bits(&self) -> Vec<bool> {
+        return self.inner.clone();
+    }
 
-        type real_number_vector_vector;
-        type real_number_vector;
-
-        include!("sfe/rust-binding/hstcfe/shim.h");
-
-        type HybridStrengthenedTurboCodeFuzzyExtractor;
-        type binary_polynomial;
-        
-        pub fn make_extractor() 
-            -> UniquePtr<HybridStrengthenedTurboCodeFuzzyExtractor>;
-
-        fn loadGeneralData(
-            self: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-            config_path: &CxxString,
-        );
-
-        fn setUserId(
-            self: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-            user_id: &CxxString,
-        );
-
-        fn generate_wrapper(
-            extractor: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-            enrollment_samples: &[f64],
-            num_samples: &[usize],
-        );
-
-        fn validForReproduce(
-            self: &HybridStrengthenedTurboCodeFuzzyExtractor,
-        ) -> bool;
-
-        fn reproduce_wrapper(
-            extractor: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-            probe_sample:&[f64],
-        ) -> Vec<bool>;
-
-        fn turboCodeInputMessage_wrapper(
-            extractor: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-        )  -> Vec<bool>;
-
-        fn saveUserSpecificData(
-            self: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-            file_name: &CxxString,
-        ) -> Result<()>;
-
-        pub fn copy_extractor(
-            general: &HybridStrengthenedTurboCodeFuzzyExtractor,
-        ) -> UniquePtr<HybridStrengthenedTurboCodeFuzzyExtractor>;
-
-        fn get_user_specific_data_wrapper(
-            fe: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-        ) -> Vec<u8>;
-
-
-        fn load_user_specific_data_wrapper(
-            fe: Pin<&mut HybridStrengthenedTurboCodeFuzzyExtractor>,
-            data: Vec<u8>);
+    pub fn len(&self) -> usize{
+        return self.inner.len();
     }
 }
 
-type Raw = ffi::HybridStrengthenedTurboCodeFuzzyExtractor;
+pub struct UserPublicData {
+    inner: Vec<u8>,
+}
+impl UserPublicData {
+    /// Wraps bytes previously obtained from [`UserPublicData::as_bytes`] or a saved file.
+    /// The contents are checked when the data is loaded into a user extractor.
+    pub fn from_bytes(bytes: Vec<u8>) -> Self {
+        Self { inner: bytes }
+    }
 
-/// Owner of one C++ `HybridStrengthenedTurboCodeFuzzyExtractor`.
-///
-/// Typical use: one *general* extractor holds the configuration ([`HSTCFE::load_general_data`]); it enrolls a subject
-/// ([`HSTCFE::set_user_id`], [`HSTCFE::generate`]) and exports its template ([`HSTCFE::get_user_specific_data`]); a *user*
-/// extractor is later rebuilt from the general one and the template ([`HSTCFE::load_user_specific_extractor`]) to
-/// reproduce the key ([`HSTCFE::reproduce`]).
-pub struct HSTCFE {
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.inner
+    }
+
+    pub fn into_bytes(self) -> Vec<u8> {
+        self.inner
+    }
+
+    pub fn save(&self, path: impl AsRef<Path>) -> Result<(), ApiError> {
+        fs::write(path, &self.inner)?;
+        Ok(())
+    }
+
+    pub fn load(path: impl AsRef<Path>) -> Result<Self, ApiError> {
+        Ok(Self { inner: fs::read(path)? })
+    }
+}
+
+pub struct GeneralHSTCFE {
     inner: UniquePtr<Raw>,
 }
 
-impl HSTCFE {
+pub struct UserHSTCFE {
+    inner: UniquePtr<Raw>,
+}
 
-    /// Creates an empty extractor (C++ default constructor).
-    pub fn new() -> Self {
-        Self { inner: ffi::make_extractor(), }
-    }
-
-    /// Whether the enrolled template carries enough reliable information to reproduce a key (C++ `validForReproduce`).
-    pub fn valid_for_reproduce(&self) -> bool{
-        self.inner.validForReproduce()
-    }
-
+impl GeneralHSTCFE {
     /// Reference to the underlying C++ object.
+    #[cfg(feature = "sys")]
     pub fn raw(&self) -> &Raw {
         self.inner.as_ref().expect("null extractor")
     }
 
-    /// Loads the general configuration file (Turbo Code, bit-loading parameters, training set) and builds the
-    /// normalizers (C++ `loadGeneralData`).
-    ///
-    /// # Panics
-    /// If the path is not valid UTF-8. A C++ error (missing or malformed file) terminates the process.
-    pub fn load_general_data(&mut self, config_path: &Path) {
-        let config_path = config_path
-            .to_str()
-            .expect("configuration path is not valid UTF-8");
-
+    pub fn from_config_file(config_path: impl AsRef<Path>) 
+        -> Result<Self, ApiError> 
+    {
+        let mut inner = hstcfe::ffi::make_extractor();
+        let config_path = match config_path.as_ref().to_str() {
+            Some(p) => p,
+            None => {
+                return Err(ApiError::FailedToLoadGeneralConfig(format!(
+                    "couldnt parse config path",
+                )))
+            }
+        };
+        
         cxx::let_cxx_string!(config_path_cpp = config_path);
 
-        self.inner.pin_mut().loadGeneralData(&config_path_cpp);
+        let res = inner.pin_mut().loadGeneralData(&config_path_cpp);
+        match res {
+            Ok(_) => Ok(Self {inner}),
+            Err(e) => Err(ApiError::FailedToLoadGeneralConfig(format!(
+                    "Failed to load general config file: {}",
+                    e.what()
+                )))
+        }
     }
 
     /// Sets the subject identifier stored in the helper data (C++ `setUserId`).
-    pub fn set_user_id(&mut self, user_id: &str) {
+    pub fn enroll(&self, user_id: &str, samples: &[ impl AsRef<[f64]>]) 
+        -> Result<(UserHSTCFE, Key, UserPublicData), ApiError>
+    {
         cxx::let_cxx_string!(user_id_cpp = user_id);
+        let mut new_inner = hstcfe::ffi::copy_extractor(&self.inner);
 
-        self.inner.pin_mut().setUserId(&user_id_cpp);
-    }
-
-    /// Enrolls a subject from its enrollment samples (one `Vec<f64>` per sample, all of the same dimensionality) and binds
-    /// a new random key (C++ `generate`). Check [`HSTCFE::valid_for_reproduce`] afterwards.
-    pub fn generate(&mut self, samples: Vec<Vec<f64>>) {
+        new_inner.pin_mut().setUserId(&user_id_cpp);
+        
         let total_values: usize =
-            samples.iter().map(Vec::len).sum();
+            samples.iter().map(|s| s.as_ref().len()).sum();
 
         let mut values = Vec::with_capacity(total_values);
         let mut lengths = Vec::with_capacity(samples.len());
 
         for sample in samples {
-            lengths.push(sample.len());
-            values.extend_from_slice(&sample);
+            let s = sample.as_ref();
+            lengths.push(s.len());
+            values.extend_from_slice(s);
         }
 
-        ffi::generate_wrapper(self.inner.pin_mut(), &values, &lengths);
+
+        hstcfe::ffi::generate_wrapper(new_inner.pin_mut(), &values, &lengths);
+        let key = hstcfe::ffi::turboCodeInputMessage_wrapper(new_inner.pin_mut());
+        let user_data = hstcfe::ffi::get_user_specific_data_wrapper(new_inner.pin_mut());
+
+        if !new_inner.validForReproduce() {
+            return Err(ApiError::InvalidExtractor("While generating new UserExtractor".to_string()));
+        }
+
+        Ok((UserHSTCFE {inner: new_inner},
+            Key{ inner:key}, 
+            UserPublicData{inner: user_data}))
     }
 
-    /// Reproduces the key from one probe sample (C++ `reproduceBatch` with a single sample). The result equals
-    /// [`HSTCFE::turbocode_input_message`] when the probe is close enough to the enrolled template.
-    pub fn reproduce(&mut self, samples: Vec<f64>) -> Vec<bool>{
-        ffi::reproduce_wrapper(self.inner.pin_mut(), &samples)
-    }
-
-    /// Returns the enrolled key (C++ `turboCodeInputMessage`). For evaluation only: a deployed system must not keep it.
-    pub fn turbocode_input_message(&mut self) -> Vec<bool>{
-        ffi::turboCodeInputMessage_wrapper(self.inner.pin_mut())
-    }
-
-    /*pub fn save_user_specific_data(&mut self, folder: &Path, user_id: &str) -> Result<(), cxx::Exception> {
-        std::fs::create_dir_all(folder).expect("could not create template folder");
-        // The loader takes the user ID from the file name
-        let file = folder.join(format!("{user_id}.userSpecificHSTCFE"));
-        let file = file.to_str().expect("file path is not valid UTF-8");
-        cxx::let_cxx_string!(file_cpp = file);
-        self.inner.pin_mut().saveUserSpecificData(&file_cpp)
-    }*/
-
-    /// Returns the user-specific helper data (C++ `getUserSpecificData`): the text of a `.userSpecificHSTCFE` file.
-    ///
-    /// The buffer also contains the secret key, for evaluation; a deployed system must not store it.
-    pub fn get_user_specific_data(&mut self) -> Vec<u8>{
-        ffi::get_user_specific_data_wrapper(self.inner.pin_mut())
- 
-    }
-    /// Builds a user extractor: copies `general` (which must hold the general configuration) and loads the helper data
-    /// returned by [`HSTCFE::get_user_specific_data`] (C++ `loadUserSpecificDataFromBlob`). A malformed buffer terminates
-    /// the process.
-    pub fn load_user_specific_extractor(general: &Self, data: Vec<u8>) -> Self{
-        let mut user_extractor = ffi::copy_extractor(&general.inner);
-        ffi::load_user_specific_data_wrapper(user_extractor.pin_mut(), data);
-        Self {
+    pub fn load_user_specific_extractor(general: &Self, data: UserPublicData) -> UserHSTCFE{
+        let mut user_extractor = hstcfe::ffi::copy_extractor(&general.inner);
+        hstcfe::ffi::load_user_specific_data_wrapper(user_extractor.pin_mut(), data.inner);
+        UserHSTCFE {
             inner: user_extractor,
+        }
+    }
+}
+
+impl UserHSTCFE {
+    /// Reference to the underlying C++ object.
+    pub fn raw(&self) -> &Raw {
+        self.inner.as_ref().expect("null extractor")
+    }
+
+    pub fn reproduce(&mut self, samples: &[f64]) -> Option<Key> {
+        let inner = hstcfe::ffi::reproduce_wrapper(self.inner.pin_mut(), samples);
+        Some(Key { inner })
+    }
+
+    pub fn get_key(&mut self) -> Key {
+        let inner = hstcfe::ffi::turboCodeInputMessage_wrapper(self.inner.pin_mut());
+        Key { inner } 
+    }
+
+    pub fn get_user_specific_data(&mut self) -> UserPublicData {
+        let inner = hstcfe::ffi::get_user_specific_data_wrapper(self.inner.pin_mut());
+        UserPublicData {inner}
+    }
+}
+
+impl std::clone::Clone for GeneralHSTCFE {
+    fn clone(&self) -> Self {
+        Self {
+            inner: hstcfe::ffi::copy_extractor(&self.inner),
         }
     }
 }
