@@ -27,7 +27,8 @@ training set whose empirical CDFs uncouple the features.
   is close enough to the enrollment samples.
 
 Rep has **no failure output**. It always returns \f$N_I\f$ bits, whether the probe is genuine or not: in \c sfe 0.2,
-\c UserHSTCFE::reproduce returns an \c Option, but it is always \c Some. Deciding whether \f$\mathbf{b}^\prime = \mathbf{b}\f$ is the job of
+\c UserHSTCFE::reproduce returns an \c Option whose \c None is reserved for reproductions known to have failed, but it is
+always \c Some. Deciding whether \f$\mathbf{b}^\prime = \mathbf{b}\f$ is the job of
 the integrator (\ref ig_verify).
 
 The three objects have different roles:
@@ -54,7 +55,7 @@ process.
 | \c UserHSTCFE::reproduce | One probe sample of dimensionality \f$D\f$. | Rep: soft Turbo decoding; returns \c Some(Key), \f$N_I\f$ bits, whatever the probe. | Wrong dimensionality: <b>abort</b>. |
 | \c UserHSTCFE::get_key | — | \f$\mathbf{b}\f$ as stored in the object, that is, read from \f$P\f$. **Never use it in a deployed flow.** | — |
 | \c UserHSTCFE::get_user_specific_data | — | \f$P\f$ of the object, as \c UserPublicData. | — |
-| \c UserHSTCFE::raw, \c GeneralHSTCFE::raw | \c GeneralHSTCFE::raw needs the feature \c sys. | Reference to the C++ object, for diagnostics. | — |
+| \c UserHSTCFE::raw, \c GeneralHSTCFE::raw | Feature \c sys only. | Reference to the C++ object, for diagnostics. | — |
 | \c Key::as_bits, \c Key::len | — | Copy of the bits as \c Vec<bool>; \f$N_I\f$. | — |
 | \c UserPublicData::from_bytes, \c as_bytes, \c into_bytes | — | Conversion from and to bytes, without any check: \f$P\f$ is only parsed by \c load_user_specific_extractor. | — |
 | \c UserPublicData::save, \c load | Path. | Writes or reads the bytes of \f$P\f$ to or from a file (the \c .userSpecificHSTCFE format). | \c Err(IOError). |

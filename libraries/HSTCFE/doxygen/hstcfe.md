@@ -168,7 +168,7 @@ The helper data can be stored in a file or kept in memory:
 | Any stream | \ref HybridStrengthenedTurboCodeFuzzyExtractor::writeUserSpecificData | \ref HybridStrengthenedTurboCodeFuzzyExtractor::readUserSpecificData |
 
 All of them use the same text format, so a buffer holds exactly the bytes of the corresponding file. The in-memory functions
-are used by the Rust binding (\c rust-binding), which keeps templates in memory.
+are used by the Rust binding (\c rust-binding), which returns templates as byte buffers.
 
 Reproduction (Rep) {#hstcfe_rep}
 ==================

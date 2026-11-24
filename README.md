@@ -14,7 +14,7 @@ Strengthened Fuzzy Extractor.
 - One **soft-decoded Turbo Code** per subject, with user-specific interleavers and puncturing, that uses the noise model of
   every feature.
 - Evaluation programs that enroll whole databases in parallel and report the authentication decision of every comparison.
-- A Rust binding of the unimodal extractor that keeps templates in memory.
+- A Rust binding of the unimodal extractor, with templates kept in memory or written to files.
 
 ## Contents
 
@@ -192,8 +192,7 @@ The Cargo package `sfe` at the root of the repository exposes the unimodal extra
 It needs Rust ≥ 1.85, CMake and Armadillo (`nix develop` provides them with the included flake).
 
 ```rust
-use sfe::HSTCFE;
-use std::path::Path;
+use sfe::GeneralHSTCFE;
 
 let general = GeneralHSTCFE::from_config_file("generalConfigFile.txt")?;
 
@@ -206,11 +205,14 @@ let Some(key_rep) = user.reproduce(&probes[0]) else {
 };
 
 let accepted = key_gen == key_rep;
-
 ```
 
 `cargo run --bin minimal` runs this example (it expects `generalConfigFile.txt` in the current folder and the samples in
-`./{enrollment,probe}/subject_0002.txt`, relative to the repository). 
+`../fingerVeinData_196/testSet/{enrollment,probe}/subject_0002.txt`, relative to the repository), and `cargo test` runs the
+tests of `tests/rust-interoperability.rs`. The helper data returned by `enroll` (`UserPublicData`) can be kept as bytes or
+written to a `.userSpecificHSTCFE` file with `save`. The *Rust binding* page of the manual describes the API, its errors and
+its current limitations, `doc/api_changes.md` explains how it differs from the C++ class, and the *Guide for cryptographic
+integrators* explains how to use it to protect real keys.
 
 
 ## Documentation
