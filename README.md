@@ -44,7 +44,7 @@ Strengthened Fuzzy Extractor.
 | `tests` | End-to-end test of both programs on synthetic data. |
 | `cmake` | CMake helpers shared by all modules. |
 | `scripts/install.sh` | Builds, tests and installs everything in Release and Debug. |
-| `doc` | Complete manual (`Doxyfile`, pages, bibliography), standalone integrators guide (`integrators/Doxyfile`), common Doxygen settings and `build_docs.sh`. |
+| `doc` | Complete manual (`Doxyfile`, pages, bibliography), standalone integrators guide (`integrators/Doxyfile`), common Doxygen settings and the build scripts (`build_docs.sh`, `build_<manual>.sh`). |
 
 Every module has its own `CMakeLists.txt`, its own `Doxyfile` and a `doxygen` folder with the detailed technical description
 of the module.
@@ -255,7 +255,16 @@ warning. The results are:
 | Guide for cryptographic integrators | `doc/integrators/html/index.html` | `doc/integrators/latex/refman.pdf`, copied to `doc/SCAMPER_SFE_Integrators_Guide.pdf` |
 | One module | `<module>/doc/html/index.html` | `<module>/doc/latex/refman.pdf` |
 
-A single manual can also be built by hand from the folder of its `Doxyfile`:
+A single manual is built, with the same checks, by its own script: `doc/build_gmmlite.sh`, `build_threadpool.sh`,
+`build_turbocodes.sh`, `build_hstcfe.sh`, `build_mhstcfe.sh`, `build_unimodal_program.sh`, `build_multimodal_program.sh`,
+`build_manual.sh` (complete manual) or `build_integrators.sh` (integrators guide), with the same options. A module manual first
+builds the manuals it links to (HTML only) if their tag files are missing, or always with `--deps`:
+
+```sh
+sh doc/build_hstcfe.sh --pdf    # HSTCFE manual, HTML and PDF
+```
+
+It can also be built by hand from the folder of its `Doxyfile`:
 
 ```sh
 cd doc && doxygen Doxyfile && cd latex && latexmk -pdf refman.tex

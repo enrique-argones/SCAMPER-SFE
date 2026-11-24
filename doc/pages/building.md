@@ -147,6 +147,27 @@ The standalone guide is built from the same page as the complete manual. The inp
 turns its references to the other pages of the complete manual into plain text; a new reference of that kind needs a line in
 that file, or the standalone build fails with a Doxygen warning.
 
+One manual is built, with the same checks, by its own script, which accepts the same options and \c --deps:
+
+| Script | Manual |
+|--------|--------|
+| \c doc/build_gmmlite.sh | GMMLite library |
+| \c doc/build_threadpool.sh | ThreadPool library |
+| \c doc/build_turbocodes.sh | TurboCodes library |
+| \c doc/build_hstcfe.sh | HSTCFE library |
+| \c doc/build_mhstcfe.sh | MHSTCFE library |
+| \c doc/build_unimodal_program.sh | Unimodal program |
+| \c doc/build_multimodal_program.sh | Multimodal program |
+| \c doc/build_manual.sh | Complete manual (PDF copied to \c doc/SCAMPER_SFE_Manual.pdf) |
+| \c doc/build_integrators.sh | Guide for cryptographic integrators (PDF copied to \c doc/SCAMPER_SFE_Integrators_Guide.pdf) |
+
+    sh doc/build_hstcfe.sh --pdf  # HSTCFE manual, HTML and PDF
+    sh doc/build_hstcfe.sh --deps # also rebuilds (HTML only) the GMMLite, ThreadPool and TurboCodes manuals
+
+A module manual reads the tag files of the manuals it links to. If one of them does not exist yet, the script first builds
+that manual (HTML only); \c --deps rebuilds them even if they exist, which refreshes the links after their sources change.
+The scripts share the code of \c doc/build_lib.sh.
+
 To build one manual by hand, run Doxygen in the folder of its \c Doxyfile and latexmk in its \c latex output folder:
 
     cd doc
